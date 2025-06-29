@@ -12,7 +12,7 @@ export const parseIngredientLine = (line: string): ParsedIngredient => {
   if (match) {
     const [, quantity, unit, name] = match
     return {
-      amount: parseFloat(quantity),
+      quantity: parseFloat(quantity),
       unit: unit || undefined,
       name: name.trim()
     }
