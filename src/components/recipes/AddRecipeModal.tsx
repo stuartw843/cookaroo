@@ -272,9 +272,7 @@ export const AddRecipeModal: React.FC<AddRecipeModalProps> = ({
     }
   }
 
-  const handleCameraCapture = () => {
-    cameraInputRef.current?.click()                       // 👈 simpler & always works
-  }
+  const handleCameraCapture = () => cameraInputRef.current?.click()
 
   const handleCameraInputChange = async (
     event: React.ChangeEvent<HTMLInputElement>
@@ -593,6 +591,14 @@ export const AddRecipeModal: React.FC<AddRecipeModalProps> = ({
           <h2 className="text-xl font-semibold text-gray-900">
             {isEditing ? 'Edit Recipe' : 'Add New Recipe'}
           </h2>
+          <input
+            ref={cameraInputRef}
+            type="file"
+            accept="image/*"
+            capture="environment"
+            onChange={handleCameraInputChange}
+            style={{ display: 'none' }}
+          />
           <button
             onClick={onClose}
             className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
@@ -700,13 +706,12 @@ export const AddRecipeModal: React.FC<AddRecipeModalProps> = ({
                       </div>
                       
                       <Button
-                        type="button" 
+                        type="button"
                         variant="outline"
                         onClick={handleCameraCapture}
                         disabled={loading}
-                        className="w-full sm:w-auto"
                       >
-                        <Camera className="w-5 h-5 mr-2" />
+                        <Camera className="w-4 h-4 mr-2" />
                         Take Photo
                       </Button>
                     </div>
@@ -715,14 +720,7 @@ export const AddRecipeModal: React.FC<AddRecipeModalProps> = ({
                       Supports JPG, PNG, and other common image formats
                     </p>
                   </div>
-                  <input
-                    ref={cameraInputRef}
-                    type="file"
-                    accept="image/*"
-                    capture="environment"
-                    onChange={handleCameraInputChange}
-                    className="hidden"
-                  />
+                  
                 </div>
                 
                 {loading && (
@@ -789,12 +787,11 @@ export const AddRecipeModal: React.FC<AddRecipeModalProps> = ({
                             </label>
                             <Button
                               type="button"
-                              size="sm"
                               variant="outline"
                               onClick={handleCameraCapture}
-                              className="w-full sm:w-auto"
+                              disabled={loading}
                             >
-                              <Camera className="w-4 h-4 mr-1" />
+                              <Camera className="w-4 h-4 mr-2" />
                               Camera
                             </Button>
                             
