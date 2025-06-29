@@ -154,7 +154,7 @@ export const AddRecipeModal: React.FC<AddRecipeModalProps> = ({
 
   // Handle outside click
   const handleBackdropClick = (e: React.MouseEvent) => {
-    if (e.target === e.currentTarget) {
+    if (e.target === e.currentTarget && !loading) {
       onClose()
     }
   }
