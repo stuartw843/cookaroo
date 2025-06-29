@@ -601,7 +601,9 @@ export const AddRecipeModal: React.FC<AddRecipeModalProps> = ({
             accept="image/*"
             capture="environment"
             onChange={handleCameraInputChange}
-            style={{ display: 'none' }}
+            className="absolute w-px h-px opacity-0 overflow-hidden -m-px"
+            tabIndex={-1}
+            aria-hidden="true"
           />
           <button
             onClick={onClose}
