@@ -37,6 +37,7 @@ export const AddRecipeModal: React.FC<AddRecipeModalProps> = ({
 }) => {
   const [mode, setMode] = useState<'url' | 'manual' | 'image'>('url')
   const [loading, setLoading] = useState(false)
+  const [captureActive, setCaptureActive] = useState(false)
   const [urlInput, setUrlInput] = useState('')
   const [textInput, setTextInput] = useState('')
   const [imageFile, setImageFile] = useState<File | null>(null)
@@ -152,9 +153,10 @@ export const AddRecipeModal: React.FC<AddRecipeModalProps> = ({
     }
   }, [isOpen, onClose])
 
-  // Handle outside click
+  // Close modal on backdrop click unless we're loading or returning
+  // from a camera capture (mobile browsers emit an extra click)
   const handleBackdropClick = (e: React.MouseEvent) => {
-    if (e.target === e.currentTarget) {
+    if (e.target === e.currentTarget && !loading && !captureActive) {
       onClose()
     }
   }
@@ -271,12 +273,20 @@ export const AddRecipeModal: React.FC<AddRecipeModalProps> = ({
     }
   }
 
-  const handleCameraCapture = () => cameraInputRef.current?.click()
+  // Open native camera and temporarily disable backdrop closing to
+  // prevent the modal from closing when the camera UI disappears
+  const handleCameraCapture = () => {
+    setCaptureActive(true)
+    setTimeout(() => setCaptureActive(false), 500)
+    cameraInputRef.current?.click()
+  }
 
   const handleCameraInputChange = async (
     event: React.ChangeEvent<HTMLInputElement>
   ) => {
-    const file = event.target.files?.[0]
+    setCaptureActive(false)
+    const input = event.target
+    const file = input.files?.[0]
     if (!file) return
 
     if (file.size > 10 * 1024 * 1024) {
@@ -302,7 +312,7 @@ export const AddRecipeModal: React.FC<AddRecipeModalProps> = ({
     }
 
     // Allow selecting the same file again by clearing the input value
-    event.target.value = ''
+    input.value = ''
   }
 
   const handleImageOCRFromFile = async (file: File) => {
@@ -600,7 +610,9 @@ export const AddRecipeModal: React.FC<AddRecipeModalProps> = ({
             accept="image/*"
             capture="environment"
             onChange={handleCameraInputChange}
-            style={{ display: 'none' }}
+            className="absolute w-px h-px opacity-0 overflow-hidden -m-px"
+            tabIndex={-1}
+            aria-hidden="true"
           />
           <button
             onClick={onClose}
