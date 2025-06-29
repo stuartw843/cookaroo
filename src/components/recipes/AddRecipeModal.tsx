@@ -46,6 +46,7 @@ export const AddRecipeModal: React.FC<AddRecipeModalProps> = ({
   const [tags, setTags] = useState<string[]>([])
 
   const cameraInputRef = useRef<HTMLInputElement>(null)
+  const [cameraMode, setCameraMode] = useState<'upload' | 'ocr'>('upload')
   
   const { currentSpace } = useSpacesContext()
   
@@ -129,8 +130,12 @@ export const AddRecipeModal: React.FC<AddRecipeModalProps> = ({
       setImagePreview('')
       setTagInput('')
       setTags([])
+      // Only reset mode if not editing
+      if (!isEditing) {
+        setMode('url')
+      }
     }
-  }, [isOpen])
+  }, [isOpen, isEditing])
 
   // Handle escape key
   useEffect(() => {
@@ -273,9 +278,9 @@ export const AddRecipeModal: React.FC<AddRecipeModalProps> = ({
     }
   }
 
-  // Open the native camera and keep the capture flag active until
-  // the input change event fires to avoid stray backdrop clicks
-  const handleCameraCapture = () => {
+  // Unified camera capture handler that works across all modes
+  const handleCameraCapture = (captureMode: 'upload' | 'ocr' = 'upload') => {
+    setCameraMode(captureMode)
     setCaptureActive(true)
     cameraInputRef.current?.click()
   }
@@ -288,16 +293,19 @@ export const AddRecipeModal: React.FC<AddRecipeModalProps> = ({
     const file = input.files?.[0]
     if (!file) return
 
-    if (file.size > 10 * 1024 * 1024) {
-      toast.error('Image size must be less than 10MB')
+    // Check file size based on camera mode
+    const maxSize = cameraMode === 'ocr' ? 10 * 1024 * 1024 : 5 * 1024 * 1024
+    const maxSizeText = cameraMode === 'ocr' ? '10MB' : '5MB'
+    
+    if (file.size > maxSize) {
+      toast.error(`Image size must be less than ${maxSizeText}`)
       return
     }
 
-    // Show loading indicator while the image is processed
     setLoading(true)
     setImageFile(file)
 
-    // preview
+    // Create preview
     const reader = new FileReader()
     reader.onload = (e) => {
       setImagePreview(e.target?.result as string)
@@ -305,9 +313,11 @@ export const AddRecipeModal: React.FC<AddRecipeModalProps> = ({
     }
     reader.readAsDataURL(file)
 
-    /* run OCR – wait so loading stays true until done */
-    if (mode === 'image') {
+    // Handle OCR if in OCR mode
+    if (cameraMode === 'ocr') {
       await handleImageOCRFromFile(file)
+    } else {
+      setLoading(false)
     }
 
     // Allow selecting the same file again by clearing the input value
@@ -594,7 +604,6 @@ export const AddRecipeModal: React.FC<AddRecipeModalProps> = ({
       setImagePreview('')
       setTags([])
       setTagInput('')
-      setMode('url')
       onClose()
     } catch (error) {
       toast.error('Failed to add recipe')
@@ -735,7 +744,7 @@ export const AddRecipeModal: React.FC<AddRecipeModalProps> = ({
                       <Button
                         type="button"
                         variant="outline"
-                        onClick={handleCameraCapture}
+                        onClick={() => handleCameraCapture('ocr')}
                         disabled={loading}
                       >
                         <Camera className="w-4 h-4 mr-2" />
@@ -815,41 +824,13 @@ export const AddRecipeModal: React.FC<AddRecipeModalProps> = ({
                             <Button
                               type="button"
                               variant="outline"
-                              onClick={handleCameraCapture}
+                              onClick={() => handleCameraCapture('upload')}
                               disabled={loading}
                             >
                               <Camera className="w-4 h-4 mr-2" />
                               Camera
                             </Button>
                             
-                            {/* Hidden camera input for manual mode */}
-                            <input
-                              id="manual-camera-input"
-                              type="file"
-                              accept="image/*"
-                              capture="environment"
-                              onChange={(e) => {
-                                const file = e.target.files?.[0]
-                                if (file) {
-                                  if (file.size > 5 * 1024 * 1024) { // 5MB limit
-                                    toast.error('Image size must be less than 5MB')
-                                    return
-                                  }
-                                  
-                                  setImageFile(file)
-                                  const reader = new FileReader()
-                                  reader.onload = (event) => {
-                                    const result = event.target?.result as string
-                                    setImagePreview(result)
-                                    setValue('image_url', '') // Clear URL when uploading file
-                                  }
-                                  reader.readAsDataURL(file)
-                                }
-                                // Clear the input value
-                                e.target.value = ''
-                              }}
-                              className="hidden"
-                            />
                           </div>
                           <p className="text-xs text-gray-500 mt-2">
                             Or enter URL below
@@ -961,15 +942,6 @@ export const AddRecipeModal: React.FC<AddRecipeModalProps> = ({
                       Add
                     </Button>
                     
-                    {/* Hidden camera input */}
-                    <input
-                      id="camera-capture-input"
-                      type="file"
-                      accept="image/*"
-                      capture="environment"
-                      onChange={handleCameraInputChange}
-                      className="hidden"
-                    />
                   </div>
                   
                   <p className="text-xs text-gray-500 mt-1">
