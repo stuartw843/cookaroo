@@ -276,7 +276,8 @@ export const AddRecipeModal: React.FC<AddRecipeModalProps> = ({
   const handleCameraInputChange = async (
     event: React.ChangeEvent<HTMLInputElement>
   ) => {
-    const file = event.target.files?.[0]
+    const input = event.target
+    const file = input.files?.[0]
     if (!file) return
 
     if (file.size > 10 * 1024 * 1024) {
@@ -302,7 +303,7 @@ export const AddRecipeModal: React.FC<AddRecipeModalProps> = ({
     }
 
     // Allow selecting the same file again by clearing the input value
-    event.target.value = ''
+    input.value = ''
   }
 
   const handleImageOCRFromFile = async (file: File) => {
