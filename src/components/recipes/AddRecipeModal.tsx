@@ -121,9 +121,60 @@ export const AddRecipeModal: React.FC<AddRecipeModalProps> = ({
     }
   }, [isEditing, recipe, setValue, removeIngredient, appendIngredient, removeInstruction, appendInstruction])
   
+  // Persist modal state to localStorage when camera is active
+  useEffect(() => {
+    if (captureActive && isOpen) {
+      const modalState = {
+        mode,
+        cameraMode,
+        urlInput,
+        textInput,
+        imagePreview,
+        tagInput,
+        tags,
+        isEditing,
+        recipeId: recipe?.id,
+        timestamp: Date.now()
+      }
+      localStorage.setItem('addRecipeModalState', JSON.stringify(modalState))
+    }
+  }, [captureActive, isOpen, mode, cameraMode, urlInput, textInput, imagePreview, tagInput, tags, isEditing, recipe?.id])
+
+  // Restore modal state from localStorage on mount
+  useEffect(() => {
+    const savedState = localStorage.getItem('addRecipeModalState')
+    if (savedState && isOpen) {
+      try {
+        const state = JSON.parse(savedState)
+        // Only restore if saved within last 5 minutes (camera operations should be quick)
+        if (Date.now() - state.timestamp < 5 * 60 * 1000) {
+          setMode(state.mode)
+          setCameraMode(state.cameraMode)
+          setUrlInput(state.urlInput || '')
+          setTextInput(state.textInput || '')
+          setImagePreview(state.imagePreview || '')
+          setTagInput(state.tagInput || '')
+          setTags(state.tags || [])
+          
+          // Clear the saved state after restoring
+          localStorage.removeItem('addRecipeModalState')
+        } else {
+          // Clear expired state
+          localStorage.removeItem('addRecipeModalState')
+        }
+      } catch (error) {
+        console.error('Failed to restore modal state:', error)
+        localStorage.removeItem('addRecipeModalState')
+      }
+    }
+  }, [isOpen])
+
   // Reset form when modal closes
   useEffect(() => {
     if (!isOpen) {
+      // Clear any saved state when modal is properly closed
+      localStorage.removeItem('addRecipeModalState')
+      
       setUrlInput('')
       setTextInput('')
       setImageFile(null)
