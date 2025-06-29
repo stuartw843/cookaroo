@@ -727,6 +727,14 @@ export const AddRecipeModal: React.FC<AddRecipeModalProps> = ({
                       Supports JPG, PNG, and other common image formats
                     </p>
                   </div>
+                  <input
+                    id="camera-capture-input"          /* <— the id handleCameraCapture looks for */
+                    type="file"
+                    accept="image/*"
+                    capture="environment"              /* back-camera on mobile */
+                    onChange={handleCameraInputChange} /* reuse your existing handler */
+                    className="hidden"
+                  />
                 </div>
                 
                 {loading && (
