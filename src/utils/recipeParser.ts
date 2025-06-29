@@ -614,6 +614,7 @@ export const AddRecipeModal: React.FC<AddRecipeModalProps> = ({
       onClick={handleBackdropClick}
       style={{ zIndex: 9997 }}
     >
+    >
       <div className="bg-white rounded-xl max-w-4xl w-full max-h-[90vh] overflow-hidden relative z-[9998]">
         <div className="flex items-center justify-between p-6 border-b border-gray-200">
           <h2 className="text-xl font-semibold text-gray-900">
