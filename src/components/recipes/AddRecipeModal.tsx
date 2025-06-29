@@ -263,7 +263,6 @@ export const AddRecipeModal: React.FC<AddRecipeModalProps> = ({
       })
       
       toast.success('Recipe extracted from image! Review and edit as needed.')
-      setMode('manual')
     } catch (error) {
       console.error('OCR error:', error)
       toast.error(error instanceof Error ? error.message : 'Failed to process recipe image')
@@ -285,7 +284,8 @@ export const AddRecipeModal: React.FC<AddRecipeModalProps> = ({
       return
     }
 
-    setLoading(true)                                      // 👈 spinner appears instantly
+    // Show loading indicator while the image is processed
+    setLoading(true)
     setImageFile(file)
 
     // preview
@@ -301,7 +301,8 @@ export const AddRecipeModal: React.FC<AddRecipeModalProps> = ({
       await handleImageOCRFromFile(file)
     }
 
-    event.target.value = ''                               // allow same file again
+    // Allow selecting the same file again by clearing the input value
+    event.target.value = ''
   }
 
   const handleImageOCRFromFile = async (file: File) => {
@@ -332,46 +333,48 @@ export const AddRecipeModal: React.FC<AddRecipeModalProps> = ({
       }
       
       const recipeData = await response.json()
-      
-      // Populate form with OCR data
-      setValue('title', recipeData.title || '')
-      setValue('description', recipeData.description || '')
-      setValue('prep_time', recipeData.prepTime || 0)
-      setValue('cook_time', recipeData.cookTime || 0)
-      setValue('servings', recipeData.servings || 4)
-      
-      // Clear existing fields and add OCR ingredients
-      for (let i = ingredientFields.length - 1; i >= 0; i--) {
-        removeIngredient(i)
-      }
-      
-      const ingredientsToAdd = recipeData.ingredients && recipeData.ingredients.length > 0 
-        ? recipeData.ingredients 
-        : [{ name: '', amount: '', unit: '' }]
-      
-      ingredientsToAdd.forEach((ingredient: any) => {
-        appendIngredient({
-          name: ingredient.name || '',
-          amount: ingredient.amount?.toString() || '',
-          unit: ingredient.unit || ''
-        })
-      })
-      
-      // Clear existing fields and add OCR instructions
-      for (let i = instructionFields.length - 1; i >= 0; i--) {
-        removeInstruction(i)
-      }
-      
-      const instructionsToAdd = recipeData.instructions && recipeData.instructions.length > 0 
-        ? recipeData.instructions 
-        : [{ instruction: '' }]
-      
-      instructionsToAdd.forEach((instruction: any) => {
-        appendInstruction({ instruction: instruction.instruction || '' })
-      })
-      
-      toast.success('Recipe extracted from image! Review and edit as needed.')
+
+      const ingredientsToAdd =
+        recipeData.ingredients && recipeData.ingredients.length > 0
+          ? recipeData.ingredients.map((ingredient: any) => ({
+              name: ingredient.name || '',
+              amount: ingredient.amount?.toString() || '',
+              unit: ingredient.unit || ''
+            }))
+          : [{ name: '', amount: '', unit: '' }]
+
+      const instructionsToAdd =
+        recipeData.instructions && recipeData.instructions.length > 0
+          ? recipeData.instructions.map((instruction: any) => ({
+              instruction: instruction.instruction || ''
+            }))
+          : [{ instruction: '' }]
+
+      // Switch to manual mode before populating form fields so inputs are mounted
       setMode('manual')
+
+      // Reset the form with the extracted values to ensure fields populate
+      reset({
+        title: recipeData.title || '',
+        description: recipeData.description || '',
+        image_url: '',
+        source_url: '',
+        prep_time: recipeData.prepTime || 0,
+        cook_time: recipeData.cookTime || 0,
+        servings: recipeData.servings || 4,
+        tags: [],
+        ingredients: ingredientsToAdd,
+        instructions: instructionsToAdd
+      })
+
+      setImageFile(file)
+      const previewReader = new FileReader()
+      previewReader.onload = (e) => {
+        setImagePreview(e.target?.result as string)
+      }
+      previewReader.readAsDataURL(file)
+
+      toast.success('Recipe extracted from image! Review and edit as needed.')
     } catch (error) {
       console.error('OCR error:', error)
       toast.error(error instanceof Error ? error.message : 'Failed to process recipe image')
