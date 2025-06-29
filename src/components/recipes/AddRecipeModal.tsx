@@ -343,39 +343,52 @@ export const AddRecipeModal: React.FC<AddRecipeModalProps> = ({
       
       const recipeData = await response.json()
 
-      const ingredientsToAdd =
-        recipeData.ingredients && recipeData.ingredients.length > 0
-          ? recipeData.ingredients.map((ingredient: any) => ({
-              name: ingredient.name || '',
-              amount: ingredient.amount?.toString() || '',
-              unit: ingredient.unit || ''
-            }))
-          : [{ name: '', amount: '', unit: '' }]
-
-      const instructionsToAdd =
-        recipeData.instructions && recipeData.instructions.length > 0
-          ? recipeData.instructions.map((instruction: any) => ({
-              instruction: instruction.instruction || ''
-            }))
-          : [{ instruction: '' }]
-
-      // Switch to manual mode before populating form fields so inputs are mounted
+      // Switch to manual mode first and wait for next tick
       setMode('manual')
+      
+      // Use setTimeout to ensure the manual form is rendered before populating
+      setTimeout(() => {
+        // Populate form fields individually using setValue
+        setValue('title', recipeData.title || '')
+        setValue('description', recipeData.description || '')
+        setValue('image_url', '')
+        setValue('source_url', '')
+        setValue('prep_time', recipeData.prepTime || 0)
+        setValue('cook_time', recipeData.cookTime || 0)
+        setValue('servings', recipeData.servings || 4)
+        
+        // Clear existing ingredients and add OCR results
+        for (let i = ingredientFields.length - 1; i >= 0; i--) {
+          removeIngredient(i)
+        }
+        
+        const ingredientsToAdd = recipeData.ingredients && recipeData.ingredients.length > 0 
+          ? recipeData.ingredients 
+          : [{ name: '', amount: '', unit: '' }]
+        
+        ingredientsToAdd.forEach((ingredient: any) => {
+          appendIngredient({
+            name: ingredient.name || '',
+            amount: ingredient.amount?.toString() || '',
+            unit: ingredient.unit || ''
+          })
+        })
+        
+        // Clear existing instructions and add OCR results
+        for (let i = instructionFields.length - 1; i >= 0; i--) {
+          removeInstruction(i)
+        }
+        
+        const instructionsToAdd = recipeData.instructions && recipeData.instructions.length > 0 
+          ? recipeData.instructions 
+          : [{ instruction: '' }]
+        
+        instructionsToAdd.forEach((instruction: any) => {
+          appendInstruction({ instruction: instruction.instruction || '' })
+        })
+      }, 100)
 
-      // Reset the form with the extracted values to ensure fields populate
-      reset({
-        title: recipeData.title || '',
-        description: recipeData.description || '',
-        image_url: '',
-        source_url: '',
-        prep_time: recipeData.prepTime || 0,
-        cook_time: recipeData.cookTime || 0,
-        servings: recipeData.servings || 4,
-        tags: [],
-        ingredients: ingredientsToAdd,
-        instructions: instructionsToAdd
-      })
-
+      // Maintain image preview
       setImageFile(file)
       const previewReader = new FileReader()
       previewReader.onload = (e) => {
@@ -498,7 +511,7 @@ export const AddRecipeModal: React.FC<AddRecipeModalProps> = ({
       parsed.ingredients.forEach(ingredient => {
         appendIngredient({
           name: ingredient.name,
-          amount: ingredient.amount?.toString() || '',
+          amount: ingredient.quantity?.toString() || '',
           unit: ingredient.unit || ''
         })
       })
