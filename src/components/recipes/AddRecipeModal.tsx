@@ -273,11 +273,10 @@ export const AddRecipeModal: React.FC<AddRecipeModalProps> = ({
     }
   }
 
-  // Open native camera and temporarily disable backdrop closing to
-  // prevent the modal from closing when the camera UI disappears
+  // Open the native camera and keep the capture flag active until
+  // the input change event fires to avoid stray backdrop clicks
   const handleCameraCapture = () => {
     setCaptureActive(true)
-    setTimeout(() => setCaptureActive(false), 500)
     cameraInputRef.current?.click()
   }
 
