@@ -43,6 +43,8 @@ export const AddRecipeModal: React.FC<AddRecipeModalProps> = ({
   const [imagePreview, setImagePreview] = useState<string>('')
   const [tagInput, setTagInput] = useState('')
   const [tags, setTags] = useState<string[]>([])
+
+  const cameraInputRef = useRef<HTMLInputElement>(null)
   
   const { currentSpace } = useSpacesContext()
   
@@ -270,52 +272,38 @@ export const AddRecipeModal: React.FC<AddRecipeModalProps> = ({
     }
   }
 
-  const handleCameraCapture = async () => {
-    try {
-      // For image mode, use the OCR camera input
-      if (mode === 'image') {
-        const cameraInput = document.getElementById('camera-capture-input') as HTMLInputElement
-        if (cameraInput) {
-          cameraInput.click()
-        }
-      } else {
-        // For manual mode, use the regular camera input
-        const cameraInput = document.getElementById('manual-camera-input') as HTMLInputElement
-        if (cameraInput) {
-          cameraInput.click()
-        }
-      }
-    } catch (error) {
-      toast.error('Camera not available')
-      console.error('Camera error:', error)
-    }
+  const handleCameraCapture = () => {
+    cameraInputRef.current?.click()                       // 👈 simpler & always works
   }
 
-  const handleCameraInputChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+  const handleCameraInputChange = async (
+    event: React.ChangeEvent<HTMLInputElement>
+  ) => {
     const file = event.target.files?.[0]
     if (!file) return
 
-    if (file.size > 10 * 1024 * 1024) { // 10MB limit for OCR
+    if (file.size > 10 * 1024 * 1024) {
       toast.error('Image size must be less than 10MB')
       return
     }
 
+    setLoading(true)                                      // 👈 spinner appears instantly
     setImageFile(file)
+
+    // preview
     const reader = new FileReader()
     reader.onload = (e) => {
-      const result = e.target?.result as string
-      setImagePreview(result)
-      setValue('image_url', '') // Clear URL when uploading file
+      setImagePreview(e.target?.result as string)
+      setValue('image_url', '')
     }
     reader.readAsDataURL(file)
-    
-    // If we're in image mode, automatically process with OCR
+
+    /* run OCR – wait so loading stays true until done */
     if (mode === 'image') {
-      handleImageOCRFromFile(file)
+      await handleImageOCRFromFile(file)
     }
 
-    // Clear the input value so the same file can be selected again
-    event.target.value = ''
+    event.target.value = ''                               // allow same file again
   }
 
   const handleImageOCRFromFile = async (file: File) => {
@@ -728,11 +716,11 @@ export const AddRecipeModal: React.FC<AddRecipeModalProps> = ({
                     </p>
                   </div>
                   <input
-                    id="camera-capture-input"          /* <— the id handleCameraCapture looks for */
+                    ref={cameraInputRef}
                     type="file"
                     accept="image/*"
-                    capture="environment"              /* back-camera on mobile */
-                    onChange={handleCameraInputChange} /* reuse your existing handler */
+                    capture="environment"
+                    onChange={handleCameraInputChange}
                     className="hidden"
                   />
                 </div>
