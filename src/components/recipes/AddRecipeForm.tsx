@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { useForm, useFieldArray } from 'react-hook-form'
 import { Button } from '../ui/Button'
 import { Input } from '../ui/Input'
@@ -6,10 +7,7 @@ import { X, Plus, Link, Type, Clock, Users, Upload, Camera, Image as ImageIcon, 
 import { parseRecipeFromText, parseIngredientLine, scrapeRecipeFromUrl } from '../../utils/recipeParser'
 import { useSpacesContext } from '../../contexts/SpacesContext'
 import toast from 'react-hot-toast'
-
-interface AddRecipeModalProps {
-  isOpen: boolean
-  onClose: () => void
+interface AddRecipeFormProps {
   onAdd: (recipe: any) => Promise<void>
   recipe?: any // Optional recipe for editing
   onUpdate?: (recipeId: string, recipe: any) => Promise<void>
@@ -28,15 +26,15 @@ interface RecipeFormData {
   instructions: { instruction: string }[]
 }
 
-export const AddRecipeModal: React.FC<AddRecipeModalProps> = ({ 
-  isOpen, 
-  onClose, 
-  onAdd, 
-  recipe, 
-  onUpdate 
+export const AddRecipeForm: React.FC<AddRecipeFormProps> = ({
+  onAdd,
+  recipe,
+  onUpdate
 }) => {
-  const [mode, setMode] = useState<'url' | 'manual' | 'image'>('url')
   const [loading, setLoading] = useState(false)
+  const [mode, setMode] = useState<"url" | "manual" | "image">("url")
+  const navigate = useNavigate();
+  const handleClose = () => navigate("/app");
   const [captureActive, setCaptureActive] = useState(false)
   const [urlInput, setUrlInput] = useState('')
   const [textInput, setTextInput] = useState('')
@@ -44,6 +42,7 @@ export const AddRecipeModal: React.FC<AddRecipeModalProps> = ({
   const [imagePreview, setImagePreview] = useState<string>('')
   const [tagInput, setTagInput] = useState('')
   const [tags, setTags] = useState<string[]>([])
+  const [step, setStep] = useState(1)
 
   const cameraInputRef = useRef<HTMLInputElement>(null)
   const [cameraMode, setCameraMode] = useState<'upload' | 'ocr'>('upload')
@@ -121,9 +120,9 @@ export const AddRecipeModal: React.FC<AddRecipeModalProps> = ({
     }
   }, [isEditing, recipe, setValue, removeIngredient, appendIngredient, removeInstruction, appendInstruction])
   
-  // Persist modal state to localStorage when camera is active
+  // Persist state to localStorage when camera is active
   useEffect(() => {
-    if (captureActive && isOpen) {
+    if (captureActive) {
       const modalState = {
         mode,
         cameraMode,
@@ -138,12 +137,12 @@ export const AddRecipeModal: React.FC<AddRecipeModalProps> = ({
       }
       localStorage.setItem('addRecipeModalState', JSON.stringify(modalState))
     }
-  }, [captureActive, isOpen, mode, cameraMode, urlInput, textInput, imagePreview, tagInput, tags, isEditing, recipe?.id])
+  }, [captureActive, mode, cameraMode, urlInput, textInput, imagePreview, tagInput, tags, isEditing, recipe?.id])
 
-  // Restore modal state from localStorage on mount
+  // Restore state from localStorage on mount
   useEffect(() => {
     const savedState = localStorage.getItem('addRecipeModalState')
-    if (savedState && isOpen) {
+    if (savedState) {
       try {
         const state = JSON.parse(savedState)
         // Only restore if saved within last 5 minutes (camera operations should be quick)
@@ -167,57 +166,31 @@ export const AddRecipeModal: React.FC<AddRecipeModalProps> = ({
         localStorage.removeItem('addRecipeModalState')
       }
     }
-  }, [isOpen])
+  }, [])
 
-  // Reset form when modal closes
+  // Initialize step on mount and clear state on unmount
   useEffect(() => {
-    if (!isOpen) {
-      // Clear any saved state when modal is properly closed
+    setStep(1)
+    return () => {
       localStorage.removeItem('addRecipeModalState')
-      
-      setUrlInput('')
-      setTextInput('')
-      setImageFile(null)
-      setImagePreview('')
-      setTagInput('')
-      setTags([])
-      // Only reset mode if not editing
-      if (!isEditing) {
-        setMode('url')
-      }
     }
-  }, [isOpen, isEditing])
+  }, [isEditing])
 
-  // Handle escape key
+  // Handle escape key to close form
   useEffect(() => {
     const handleEscape = (e: KeyboardEvent) => {
-      if (e.key === 'Escape' && isOpen) {
-        onClose()
+      if (e.key === 'Escape') {
+        handleClose()
       }
     }
 
-    if (isOpen) {
-      // Prevent body scroll when modal is open
-      const originalOverflow = document.body.style.overflow
-      document.body.style.overflow = 'hidden'
-      
-      document.addEventListener('keydown', handleEscape)
-      return () => {
-        document.removeEventListener('keydown', handleEscape)
-        document.body.style.overflow = originalOverflow
-      }
+    document.addEventListener('keydown', handleEscape)
+    return () => {
+      document.removeEventListener('keydown', handleEscape)
     }
-  }, [isOpen, onClose])
+  }, [])
 
   // Close modal on backdrop click unless we're loading or returning
-  // from a camera capture (mobile browsers emit an extra click)
-  const handleBackdropClick = (e: React.MouseEvent) => {
-    if (e.target === e.currentTarget && !loading && !captureActive) {
-      onClose()
-    }
-  }
-  
-  const handleImageUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0]
     if (file) {
       if (file.size > 5 * 1024 * 1024) { // 5MB limit
@@ -655,7 +628,7 @@ export const AddRecipeModal: React.FC<AddRecipeModalProps> = ({
       setImagePreview('')
       setTags([])
       setTagInput('')
-      onClose()
+      handleClose()
     } catch (error) {
       toast.error('Failed to add recipe')
     } finally {
@@ -663,16 +636,9 @@ export const AddRecipeModal: React.FC<AddRecipeModalProps> = ({
     }
   }
   
-  if (!isOpen) return null
-  
   return (
-    <div 
-      className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-[9997]"
-      onClick={handleBackdropClick}
-      style={{ zIndex: 9997 }}
-    >
-      <div className="bg-white rounded-xl max-w-4xl w-full max-h-[90vh] overflow-hidden relative z-[9998]">
-        <div className="flex items-center justify-between p-6 border-b border-gray-200">
+    <div className="max-w-4xl mx-auto bg-white rounded-xl my-8 overflow-hidden">
+      <div className="flex items-center justify-between p-6 border-b border-gray-200">
           <h2 className="text-xl font-semibold text-gray-900">
             {isEditing ? 'Edit Recipe' : 'Add New Recipe'}
           </h2>
@@ -687,7 +653,7 @@ export const AddRecipeModal: React.FC<AddRecipeModalProps> = ({
             aria-hidden="true"
           />
           <button
-            onClick={onClose}
+            onClick={handleClose}
             className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
           >
             <X className="w-5 h-5" />
@@ -825,7 +791,15 @@ export const AddRecipeModal: React.FC<AddRecipeModalProps> = ({
             
             {/* Manual Entry Form */}
             {(isEditing || mode === 'manual') && (
-              <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
+              <form
+                onSubmit={step === 2 ? handleSubmit(onSubmit) : (e) => {
+                  e.preventDefault()
+                  setStep(2)
+                }}
+                className="space-y-6"
+              >
+                {step === 1 && (
+                  <>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <Input
                     label="Recipe Title"
@@ -906,7 +880,7 @@ export const AddRecipeModal: React.FC<AddRecipeModalProps> = ({
                     />
                   </div>
                 </div>
-                
+
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
                     Description
@@ -917,7 +891,7 @@ export const AddRecipeModal: React.FC<AddRecipeModalProps> = ({
                     placeholder="Brief description of the recipe..."
                   />
                 </div>
-                
+
                 <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
                   <Input
                     label="Prep Time (min)"
@@ -932,7 +906,7 @@ export const AddRecipeModal: React.FC<AddRecipeModalProps> = ({
                   <Input
                     label="Servings"
                     type="number"
-                    {...register('servings', { 
+                    {...register('servings', {
                       required: 'Servings is required',
                       valueAsNumber: true,
                       min: 1
@@ -945,7 +919,7 @@ export const AddRecipeModal: React.FC<AddRecipeModalProps> = ({
                     placeholder="https://example.com"
                   />
                 </div>
-                
+
                 {/* Enhanced Tags Section */}
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -999,7 +973,19 @@ export const AddRecipeModal: React.FC<AddRecipeModalProps> = ({
                     Press Enter or click Add to add tags
                   </p>
                 </div>
-                
+
+                <div className="flex justify-end space-x-3 pt-4 border-t border-gray-200">
+                  <Button type="button" variant="outline" onClick={handleClose}>
+                    Cancel
+                  </Button>
+                  <Button type="submit">Next</Button>
+                </div>
+                </>
+                )}
+
+                {step === 2 && (
+                  <>
+
                 {/* Ingredients */}
                 <div>
                   <div className="flex items-center justify-between mb-3">
@@ -1088,15 +1074,17 @@ export const AddRecipeModal: React.FC<AddRecipeModalProps> = ({
                     ))}
                   </div>
                 </div>
-                
-                <div className="flex justify-end space-x-3 pt-4 border-t border-gray-200">
-                  <Button type="button" variant="outline" onClick={onClose}>
-                    Cancel
+
+                <div className="flex justify-between space-x-3 pt-4 border-t border-gray-200">
+                  <Button type="button" variant="outline" onClick={() => setStep(1)}>
+                    Back
                   </Button>
                   <Button type="submit" loading={loading} disabled={loading}>
                     {isEditing ? 'Update Recipe' : 'Add Recipe'}
                   </Button>
                 </div>
+                </>
+                )}
               </form>
             )}
           </div>

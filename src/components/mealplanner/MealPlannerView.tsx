@@ -1,12 +1,11 @@
 import React, { useState, useEffect } from 'react'
+import { useNavigate } from "react-router-dom"
 import { format, startOfWeek, addDays, addWeeks, subWeeks, isSameWeek } from 'date-fns'
 import { Button } from '../ui/Button'
 import { Card, CardContent, CardHeader } from '../ui/Card'
 import { MealPlanGrid } from './MealPlanGrid'
 import { MealPlanSelector } from './MealPlanSelector'
 import { RecipeDetail } from '../recipes/RecipeDetail'
-import { useMealPlans } from '../../hooks/useMealPlans'
-import { useRecipes } from '../../hooks/useRecipes'
 import { ChevronLeft, ChevronRight, Plus, Copy, Calendar, Trash2 } from 'lucide-react'
 import toast from 'react-hot-toast'
 
@@ -16,9 +15,6 @@ export const MealPlannerView: React.FC = () => {
   const [showRecipeSelector, setShowRecipeSelector] = useState(false)
   const [selectedSlot, setSelectedSlot] = useState<{ day: number; meal: string } | null>(null)
   const [selectedRecipe, setSelectedRecipe] = useState<any>(null)
-  const [editingRecipe, setEditingRecipe] = useState<any>(null)
-  const [showAddModal, setShowAddModal] = useState(false)
-  
   const { 
     mealPlans, 
     currentMealPlan, 
@@ -30,18 +26,11 @@ export const MealPlannerView: React.FC = () => {
     updateMealPlanItem,
     deleteMealPlan 
   } = useMealPlans()
-  
   const { recipes, addRecipe, updateRecipe } = useRecipes()
-  
+
+  const navigate = useNavigate();
   const handleEditRecipe = (recipe: any) => {
-    setEditingRecipe(recipe)
-    setSelectedRecipe(null) // Close detail modal
-    setShowAddModal(true) // Open edit modal
-  }
-  
-  const handleCloseAddModal = () => {
-    setShowAddModal(false)
-    setEditingRecipe(null)
+    navigate(`/app/edit-recipe/${recipe.id}`);
   }
 
   // Find meal plan for selected week
@@ -347,24 +336,13 @@ export const MealPlannerView: React.FC = () => {
           weekDays={weekDays}
         />
       )}
-      
+
       {/* Recipe Detail Modal */}
       {selectedRecipe && (
         <RecipeDetail
           recipe={selectedRecipe}
           onClose={() => setSelectedRecipe(null)}
           onEdit={handleEditRecipe}
-        />
-      )}
-      
-      {/* Add/Edit Recipe Modal */}
-      {showAddModal && (
-        <AddRecipeModal
-          isOpen={showAddModal}
-          onClose={handleCloseAddModal}
-          onAdd={addRecipe}
-          recipe={editingRecipe}
-          onUpdate={updateRecipe}
         />
       )}
     </div>

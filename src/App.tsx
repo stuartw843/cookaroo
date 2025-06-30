@@ -1,5 +1,5 @@
 import React, { useState } from 'react'
-import { BrowserRouter as Router, Routes, Route, Navigate, useLocation } from 'react-router-dom'
+import { BrowserRouter as Router, Routes, Route, Navigate, useLocation, Link, useNavigate } from 'react-router-dom'
 import { ChefHat } from 'lucide-react'
 import { Toaster } from 'react-hot-toast'
 import { AuthProvider, useAuth } from './contexts/AuthContext'
@@ -21,7 +21,7 @@ import { SettingsPage } from './components/settings/SettingsPage'
 import { SpaceManagement } from './components/collaboration/SpaceManagement'
 import { JoinSpace } from './components/collaboration/JoinSpace'
 import { RecipeCard } from './components/recipes/RecipeCard'
-import { AddRecipeModal } from './components/recipes/AddRecipeModal'
+import { AddRecipePage } from './components/recipes/AddRecipePage'
 import { RecipeDetail } from './components/recipes/RecipeDetail'
 import { Input } from './components/ui/Input'
 import { Button } from './components/ui/Button'
@@ -34,9 +34,8 @@ type ViewMode = 'recipes' | 'mealplanner' | 'settings'
 const Dashboard: React.FC = () => {
   const [currentView, setCurrentView] = useState<ViewMode>('recipes')
   const [isTransitioning, setIsTransitioning] = useState(false)
-  const [showAddModal, setShowAddModal] = useState(false)
+  const navigate = useNavigate();
   const [selectedRecipe, setSelectedRecipe] = useState<any>(null)
-  const [editingRecipe, setEditingRecipe] = useState<any>(null)
   const [searchQuery, setSearchQuery] = useState('')
   const [selectedTags, setSelectedTags] = useState<string[]>([])
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid')
@@ -192,13 +191,13 @@ const Dashboard: React.FC = () => {
                 <h1 className="text-3xl font-bold text-gray-900">Your Recipes</h1>
                 <p className="text-gray-600 mt-1">Organize and manage your favorite recipes</p>
               </div>
-              <Button onClick={() => setShowAddModal(true)} className="flex items-center space-x-2">
-                <Plus className="w-4 h-4" />
-                <span>Add Recipe</span>
-              </Button>
+              <Link to="/app/add-recipe" className="flex items-center space-x-2">
+                <Button className="flex items-center space-x-2">
+                  <Plus className="w-4 h-4" />
+                  <span>Add Recipe</span>
+                </Button>
+              </Link>
             </div>
-
-            {/* Search and Filters */}
             <div className="bg-white rounded-xl border border-gray-200 p-6 mb-8">
               <div className="flex flex-col lg:flex-row lg:items-center space-y-4 lg:space-y-0 lg:space-x-4 mb-4">
                 <div className="flex-1">
@@ -349,23 +348,6 @@ const Dashboard: React.FC = () => {
           </>
         )
     }
-  }
-  
-  const handleEditRecipe = (recipe: any) => {
-    setEditingRecipe(recipe)
-    setSelectedRecipe(null) // Close detail modal
-    setShowAddModal(true) // Open edit modal
-  }
-  
-  const handleCloseAddModal = () => {
-    setShowAddModal(false)
-    setEditingRecipe(null)
-  }
-  
-  return (
-    <div className="min-h-screen bg-gray-50">
-      <Header 
-        currentView={currentView}
         onViewChange={handleViewChange}
         onManageSpace={() => setShowSpaceManagement(true)}
       />
@@ -383,20 +365,13 @@ const Dashboard: React.FC = () => {
         </div>
       </div>
       
-      {/* Modals */}
-      <AddRecipeModal
-        isOpen={showAddModal}
-        onClose={handleCloseAddModal}
-        onAdd={addRecipe}
-        recipe={editingRecipe}
-        onUpdate={updateRecipe}
       />
       
       {selectedRecipe && (
         <RecipeDetail
           recipe={selectedRecipe}
           onClose={() => setSelectedRecipe(null)}
-          onEdit={handleEditRecipe}
+          onEdit={(r) => navigate('/app/edit-recipe/' + r.id)}
         />
       )}
       
@@ -497,6 +472,8 @@ function App() {
             
             {/* App routes (protected) */}
             <Route path="/app" element={
+            <Route path="/app/add-recipe" element={<ProtectedRoute><SpacesProvider><AddRecipePage /></SpacesProvider></ProtectedRoute>} />
+            <Route path="/app/edit-recipe/:id" element={<ProtectedRoute><SpacesProvider><AddRecipePage /></SpacesProvider></ProtectedRoute>} />
               <ProtectedRoute>
                 <SpacesProvider>
                   <Dashboard />
