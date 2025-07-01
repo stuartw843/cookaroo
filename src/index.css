@@ -1,0 +1,157 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Mobile-specific improvements */
+@layer utilities {
+  /* Better touch targets for mobile */
+  .touch-target {
+    min-height: 44px;
+    min-width: 44px;
+  }
+  
+  /* Smooth scrolling for mobile */
+  .smooth-scroll {
+    -webkit-overflow-scrolling: touch;
+    scroll-behavior: smooth;
+  }
+  
+  /* Better text rendering on mobile */
+  .text-rendering {
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    text-rendering: optimizeLegibility;
+  }
+  
+  /* Safe area handling for mobile devices */
+  .safe-area-top {
+    padding-top: env(safe-area-inset-top);
+  }
+  
+  .safe-area-bottom {
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+  
+  /* Mobile-friendly focus states */
+  .focus-mobile {
+    @apply focus:outline-none focus:ring-2 focus:ring-orange-500 focus:ring-offset-2;
+  }
+  
+  /* Better line clamping */
+  .line-clamp-1 {
+    overflow: hidden;
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 1;
+  }
+  
+  .line-clamp-2 {
+    overflow: hidden;
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 2;
+  }
+  
+  .line-clamp-3 {
+    overflow: hidden;
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 3;
+  }
+}
+
+/* Mobile-specific component styles */
+@layer components {
+  /* Mobile-optimized buttons */
+  .btn-mobile {
+    @apply min-h-[48px] px-4 py-3 text-base font-medium rounded-lg transition-all duration-200;
+    @apply focus:outline-none focus:ring-2 focus:ring-orange-500 focus:ring-offset-2;
+    @apply active:scale-95;
+  }
+  
+  /* Mobile-optimized inputs */
+  .input-mobile {
+    @apply min-h-[48px] px-4 py-3 text-base border border-gray-300 rounded-lg;
+    @apply focus:ring-orange-500 focus:border-orange-500;
+    @apply transition-colors duration-200;
+  }
+  
+  /* Mobile-optimized cards */
+  .card-mobile {
+    @apply bg-white rounded-xl border border-gray-200 shadow-sm;
+    @apply hover:shadow-md active:scale-[0.98];
+    @apply transition-all duration-200;
+  }
+}
+
+/* Global mobile improvements */
+html {
+  @apply text-rendering;
+}
+
+body {
+  @apply smooth-scroll;
+}
+
+/* Improve tap highlighting on mobile */
+* {
+  -webkit-tap-highlight-color: rgba(251, 146, 60, 0.1);
+}
+
+/* Better scrollbar styling */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: #f1f5f9;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #94a3b8;
+}
+
+/* Mobile viewport fixes */
+@media screen and (max-width: 768px) {
+  /* Prevent zoom on input focus */
+  input[type="text"],
+  input[type="email"],
+  input[type="password"],
+  input[type="search"],
+  textarea,
+  select {
+    font-size: 16px !important;
+  }
+  
+  /* Better spacing for mobile */
+  .container {
+    @apply px-4;
+  }
+  
+  /* Optimize modal positioning for mobile */
+  .modal-mobile {
+    @apply fixed inset-0 z-50 flex items-end sm:items-center justify-center;
+  }
+  
+  .modal-content-mobile {
+    @apply w-full max-w-lg mx-4 mb-0 sm:mb-4 bg-white rounded-t-xl sm:rounded-xl;
+    @apply max-h-[90vh] overflow-y-auto;
+  }
+}
+
+/* Landscape mobile optimizations */
+@media screen and (max-height: 500px) and (orientation: landscape) {
+  .header-mobile {
+    @apply h-12;
+  }
+  
+  .content-mobile {
+    @apply py-4;
+  }
+}
