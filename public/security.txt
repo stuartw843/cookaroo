@@ -1,0 +1,11 @@
+# Security Policy for Cookaroo
+
+Contact: security@cookaroo.recipes
+Expires: 2025-12-31T23:59:59.000Z
+Encryption: https://cookaroo.recipes/pgp-key.txt
+Acknowledgments: https://cookaroo.recipes/security-acknowledgments
+Preferred-Languages: en
+Canonical: https://cookaroo.recipes/.well-known/security.txt
+
+# Please report security vulnerabilities to security@cookaroo.recipes
+# We appreciate responsible disclosure and will respond promptly to valid reports.</parameter>

@@ -24,7 +24,7 @@ export const LandingPage: React.FC = () => {
       <BoltBadge variant="black-circle" size="md" position="top-right" />
       
       {/* Navigation */}
-      <nav className="bg-white border-b border-gray-100 sticky top-0 z-50" role="navigation" aria-label="Main navigation">
+      <nav className="bg-white border-b border-gray-100 sticky top-0 z-50" role="navigation" aria-label="Main navigation" itemScope itemType="https://schema.org/SiteNavigationElement">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-16">
             <div className="flex items-center space-x-3">
@@ -33,14 +33,17 @@ export const LandingPage: React.FC = () => {
             </div>
             
             <div className="hidden md:flex items-center space-x-8">
-              <Link to="/features" className="text-gray-600 hover:text-gray-900 transition-colors" aria-label="View Cookaroo features">
+              <Link to="/features" className="text-gray-600 hover:text-gray-900 transition-colors" aria-label="View Cookaroo features" itemProp="url">
                 Features
               </Link>
-              <Link to="/about" className="text-gray-600 hover:text-gray-900 transition-colors" aria-label="Learn about Cookaroo">
+              <Link to="/about" className="text-gray-600 hover:text-gray-900 transition-colors" aria-label="Learn about Cookaroo" itemProp="url">
                 About
               </Link>
-              <Link to="/contact" className="text-gray-600 hover:text-gray-900 transition-colors" aria-label="Contact Cookaroo">
+              <Link to="/contact" className="text-gray-600 hover:text-gray-900 transition-colors" aria-label="Contact Cookaroo" itemProp="url">
                 Contact
+              </Link>
+              <Link to="/blog" className="text-gray-600 hover:text-gray-900 transition-colors" aria-label="Cookaroo cooking blog" itemProp="url">
+                Blog
               </Link>
             </div>
             

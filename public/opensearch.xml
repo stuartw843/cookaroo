@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<OpenSearchDescription xmlns="http://a9.com/-/spec/opensearch/1.1/">
+  <ShortName>Cookaroo</ShortName>
+  <Description>Search Cookaroo recipes and meal planning tips</Description>
+  <Tags>recipes cooking meal-planning food</Tags>
+  <Contact>hello@cookaroo.recipes</Contact>
+  <Url type="text/html" template="https://cookaroo.recipes/search?q={searchTerms}"/>
+  <Url type="application/opensearchdescription+xml" rel="self" template="https://cookaroo.recipes/opensearch.xml"/>
+  <Image height="16" width="16" type="image/x-icon">https://cookaroo.recipes/favicon.ico</Image>
+  <Image height="64" width="64" type="image/png">https://cookaroo.recipes/cookaroo.png</Image>
+  <Developer>Cookaroo Team</Developer>
+  <Attribution>Cookaroo Recipe Management Platform</Attribution>
+  <SyndicationRight>open</SyndicationRight>
+  <AdultContent>false</AdultContent>
+  <Language>en-us</Language>
+  <OutputEncoding>UTF-8</OutputEncoding>
+  <InputEncoding>UTF-8</InputEncoding>
+</OpenSearchDescription></parameter>

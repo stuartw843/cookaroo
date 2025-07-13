@@ -1,0 +1,26 @@
+# humanstxt.org/
+# The humans responsible & technology colophon
+
+# TEAM
+    Developer: Cookaroo Team
+    Contact: hello [at] cookaroo.recipes
+    Location: United States
+
+# THANKS
+    Recipe Management Community
+    Home Cooks Everywhere
+    Open Source Contributors
+
+# TECHNOLOGY COLOPHON
+    HTML5, CSS3, JavaScript
+    React, TypeScript
+    Tailwind CSS
+    Supabase
+    Vite
+    Deployed on Netlify
+
+# SITE
+    Last update: 2025/01/29
+    Language: English
+    Doctype: HTML5
+    IDE: Built with Bolt.new</parameter>
