@@ -24,22 +24,22 @@ export const LandingPage: React.FC = () => {
       <BoltBadge variant="black-circle" size="md" position="top-right" />
       
       {/* Navigation */}
-      <nav className="bg-white border-b border-gray-100 sticky top-0 z-50">
+      <nav className="bg-white border-b border-gray-100 sticky top-0 z-50" role="navigation" aria-label="Main navigation">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-16">
             <div className="flex items-center space-x-3">
-              <Logo size="md" />
-              <span className="text-xl font-bold text-gray-900">Cookaroo</span>
+              <Logo size="md" alt="Cookaroo logo" />
+              <h1 className="text-xl font-bold text-gray-900">Cookaroo</h1>
             </div>
             
             <div className="hidden md:flex items-center space-x-8">
-              <Link to="/features" className="text-gray-600 hover:text-gray-900 transition-colors">
+              <Link to="/features" className="text-gray-600 hover:text-gray-900 transition-colors" aria-label="View Cookaroo features">
                 Features
               </Link>
-              <Link to="/about" className="text-gray-600 hover:text-gray-900 transition-colors">
+              <Link to="/about" className="text-gray-600 hover:text-gray-900 transition-colors" aria-label="Learn about Cookaroo">
                 About
               </Link>
-              <Link to="/contact" className="text-gray-600 hover:text-gray-900 transition-colors">
+              <Link to="/contact" className="text-gray-600 hover:text-gray-900 transition-colors" aria-label="Contact Cookaroo">
                 Contact
               </Link>
             </div>
@@ -57,7 +57,7 @@ export const LandingPage: React.FC = () => {
       </nav>
 
       {/* Hero Section */}
-      <section className="relative overflow-hidden bg-gradient-to-br from-orange-50 via-white to-teal-50">
+      <section className="relative overflow-hidden bg-gradient-to-br from-orange-50 via-white to-teal-50" aria-labelledby="hero-heading">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20 lg:py-32">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
             <div className="space-y-8">
@@ -66,11 +66,11 @@ export const LandingPage: React.FC = () => {
                   <Sparkles className="w-4 h-4 mr-2" />
                   Your culinary companion
                 </div>
-                <h1 className="text-4xl lg:text-6xl font-bold text-gray-900 leading-tight">
+                <h2 id="hero-heading" className="text-4xl lg:text-6xl font-bold text-gray-900 leading-tight">
                   Organize recipes,
                   <span className="text-orange-600"> plan meals</span>,
                   cook together
-                </h1>
+                </h2>
                 <p className="text-xl text-gray-600 leading-relaxed">
                   Transform your kitchen chaos into culinary harmony. Store recipes, plan weekly meals, 
                   and collaborate with family and friends—all in one beautiful, intuitive platform.
@@ -111,23 +111,24 @@ export const LandingPage: React.FC = () => {
               <div className="relative z-10 bg-white rounded-2xl shadow-2xl p-6 transform rotate-2 hover:rotate-0 transition-transform duration-300">
                 <img
                   src="https://images.pexels.com/photos/1640777/pexels-photo-1640777.jpeg?auto=compress&cs=tinysrgb&w=800"
-                  alt="Beautiful recipe display"
+                  alt="Mediterranean pasta recipe displayed in Cookaroo app interface showing ingredients and cooking time"
                   className="w-full h-64 object-cover rounded-xl"
+                  loading="eager"
                 />
                 <div className="mt-4">
-                  <h3 className="font-semibold text-gray-900">Mediterranean Pasta</h3>
+                  <h3 className="font-semibold text-gray-900">Mediterranean Pasta Recipe</h3>
                   <div className="flex items-center space-x-4 mt-2 text-sm text-gray-500">
                     <div className="flex items-center space-x-1">
                       <Clock className="w-4 h-4" />
-                      <span>25 min</span>
+                      <span>25 minutes cooking time</span>
                     </div>
                     <div className="flex items-center space-x-1">
                       <Users className="w-4 h-4" />
-                      <span>4 servings</span>
+                      <span>Serves 4 people</span>
                     </div>
                     <div className="flex items-center space-x-1">
                       <Star className="w-4 h-4 text-yellow-400 fill-current" />
-                      <span>4.8</span>
+                      <span>4.8 star rating</span>
                     </div>
                   </div>
                 </div>
@@ -146,10 +147,10 @@ export const LandingPage: React.FC = () => {
       </section>
 
       {/* Features Section */}
-      <section className="py-20 bg-gray-50">
+      <section className="py-20 bg-gray-50" aria-labelledby="features-heading">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center space-y-4 mb-16">
-            <h2 className="text-3xl lg:text-4xl font-bold text-gray-900">
+            <h2 id="features-heading" className="text-3xl lg:text-4xl font-bold text-gray-900">
               Everything you need for culinary success
             </h2>
             <p className="text-xl text-gray-600 max-w-3xl mx-auto">
@@ -162,37 +163,37 @@ export const LandingPage: React.FC = () => {
             {[
               {
                 icon: BookOpen,
-                title: "Smart Recipe Organization",
+                title: "Smart Recipe Organization & Management",
                 description: "Import recipes from any website, organize with tags, and search through your collection instantly.",
                 color: "bg-blue-100 text-blue-600"
               },
               {
                 icon: Calendar,
-                title: "Weekly Meal Planning",
+                title: "Weekly Meal Planning & Scheduling",
                 description: "Plan your meals for the week, duplicate successful plans, and never wonder 'what's for dinner?' again.",
                 color: "bg-green-100 text-green-600"
               },
               {
                 icon: Users,
-                title: "Family Collaboration",
+                title: "Family Recipe Collaboration",
                 description: "Share recipe spaces with family members, plan meals together, and build your family cookbook.",
                 color: "bg-purple-100 text-purple-600"
               },
               {
                 icon: Zap,
-                title: "Recipe Import Magic",
+                title: "Automatic Recipe Import",
                 description: "Paste any recipe URL and watch it automatically extract ingredients, instructions, and cooking times.",
                 color: "bg-yellow-100 text-yellow-600"
               },
               {
                 icon: Clock,
-                title: "Smart Scaling",
+                title: "Smart Recipe Scaling",
                 description: "Automatically scale recipes for any number of servings with intelligent measurement conversions.",
                 color: "bg-red-100 text-red-600"
               },
               {
                 icon: Shield,
-                title: "Your Data, Secure",
+                title: "Secure Data Storage",
                 description: "Your recipes and meal plans are securely stored and accessible only to you and those you invite.",
                 color: "bg-indigo-100 text-indigo-600"
               }
@@ -201,7 +202,7 @@ export const LandingPage: React.FC = () => {
                 <div className={`w-12 h-12 rounded-lg ${feature.color} flex items-center justify-center mb-4`}>
                   <feature.icon className="w-6 h-6" />
                 </div>
-                <h3 className="text-xl font-semibold text-gray-900 mb-2">{feature.title}</h3>
+                <h3 className="text-xl font-semibold text-gray-900 mb-2" id={`feature-${index}`}>{feature.title}</h3>
                 <p className="text-gray-600">{feature.description}</p>
               </div>
             ))}
@@ -210,12 +211,12 @@ export const LandingPage: React.FC = () => {
       </section>
 
       {/* Benefits Section */}
-      <section className="py-20 bg-white">
+      <section className="py-20 bg-white" aria-labelledby="benefits-heading">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-16 items-center">
             <div className="space-y-8">
               <div className="space-y-4">
-                <h2 className="text-3xl lg:text-4xl font-bold text-gray-900">
+                <h2 id="benefits-heading" className="text-3xl lg:text-4xl font-bold text-gray-900">
                   Turn cooking chaos into culinary confidence
                 </h2>
                 <p className="text-xl text-gray-600">
@@ -260,23 +261,27 @@ export const LandingPage: React.FC = () => {
               <div className="grid grid-cols-2 gap-4">
                 <img
                   src="https://images.pexels.com/photos/1640772/pexels-photo-1640772.jpeg?auto=compress&cs=tinysrgb&w=400"
-                  alt="Family cooking together"
+                  alt="Happy family cooking together in modern kitchen using recipe app"
                   className="w-full h-48 object-cover rounded-xl"
+                  loading="lazy"
                 />
                 <img
                   src="https://images.pexels.com/photos/1640774/pexels-photo-1640774.jpeg?auto=compress&cs=tinysrgb&w=400"
-                  alt="Organized ingredients"
+                  alt="Well-organized cooking ingredients and meal prep setup"
                   className="w-full h-48 object-cover rounded-xl mt-8"
+                  loading="lazy"
                 />
                 <img
                   src="https://images.pexels.com/photos/1640775/pexels-photo-1640775.jpeg?auto=compress&cs=tinysrgb&w=400"
-                  alt="Meal planning"
+                  alt="Weekly meal planning calendar with healthy recipes"
                   className="w-full h-48 object-cover rounded-xl -mt-8"
+                  loading="lazy"
                 />
                 <img
                   src="https://images.pexels.com/photos/1640776/pexels-photo-1640776.jpeg?auto=compress&cs=tinysrgb&w=400"
-                  alt="Delicious meal"
+                  alt="Delicious home-cooked meal prepared using recipe app"
                   className="w-full h-48 object-cover rounded-xl"
+                  loading="lazy"
                 />
               </div>
             </div>
@@ -285,11 +290,11 @@ export const LandingPage: React.FC = () => {
       </section>
 
       {/* CTA Section */}
-      <section className="py-20 bg-gradient-to-r from-orange-500 to-teal-500">
+      <section className="py-20 bg-gradient-to-r from-orange-500 to-teal-500" aria-labelledby="cta-heading">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
           <div className="space-y-8">
             <div className="space-y-4">
-              <h2 className="text-3xl lg:text-4xl font-bold text-white">
+              <h2 id="cta-heading" className="text-3xl lg:text-4xl font-bold text-white">
                 Ready to transform your kitchen?
               </h2>
               <p className="text-xl text-orange-100">
@@ -315,12 +320,12 @@ export const LandingPage: React.FC = () => {
       </section>
 
       {/* Footer */}
-      <footer className="bg-gray-900 text-white py-12">
+      <footer className="bg-gray-900 text-white py-12" role="contentinfo" aria-label="Site footer">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
             <div className="space-y-4">
               <div className="flex items-center space-x-3">
-                <Logo size="md" />
+                <Logo size="md" alt="Cookaroo footer logo" />
                 <span className="text-xl font-bold">Cookaroo</span>
               </div>
               <p className="text-gray-400">
@@ -329,7 +334,7 @@ export const LandingPage: React.FC = () => {
             </div>
             
             <div>
-              <h3 className="font-semibold mb-4">Product</h3>
+              <h3 className="font-semibold mb-4">Product Features</h3>
               <div className="space-y-2">
                 <Link to="/features" className="block text-gray-400 hover:text-white transition-colors">
                   Features
@@ -341,7 +346,7 @@ export const LandingPage: React.FC = () => {
             </div>
             
             <div>
-              <h3 className="font-semibold mb-4">Company</h3>
+              <h3 className="font-semibold mb-4">Company Info</h3>
               <div className="space-y-2">
                 <Link to="/about" className="block text-gray-400 hover:text-white transition-colors">
                   About
@@ -353,7 +358,7 @@ export const LandingPage: React.FC = () => {
             </div>
             
             <div>
-              <h3 className="font-semibold mb-4">Legal</h3>
+              <h3 className="font-semibold mb-4">Legal Information</h3>
               <div className="space-y-2">
                 <Link to="/privacy" className="block text-gray-400 hover:text-white transition-colors">
                   Privacy Policy

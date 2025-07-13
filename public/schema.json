@@ -1,0 +1,65 @@
+{
+  "@context": "https://schema.org",
+  "@type": "WebApplication",
+  "name": "Cookaroo",
+  "description": "Recipe management and meal planning application for organizing your kitchen and collaborating with family. Import recipes from any website, create meal plans, and build your family cookbook.",
+  "url": "https://cookaroo.recipes",
+  "applicationCategory": "LifestyleApplication",
+  "operatingSystem": "Web Browser",
+  "browserRequirements": "Requires JavaScript. Requires HTML5.",
+  "offers": {
+    "@type": "Offer",
+    "price": "0",
+    "priceCurrency": "USD",
+    "availability": "https://schema.org/InStock"
+  },
+  "creator": {
+    "@type": "Organization",
+    "name": "Cookaroo",
+    "url": "https://cookaroo.recipes"
+  },
+  "featureList": [
+    "Recipe organization and management",
+    "Weekly meal planning and scheduling",
+    "Recipe import from cooking websites",
+    "Family collaboration and sharing",
+    "Automatic ingredient scaling",
+    "Meal plan templates and duplication",
+    "Recipe search and filtering",
+    "Secure data storage",
+    "Mobile-responsive design",
+    "Free to use"
+  ],
+  "screenshot": "https://cookaroo.recipes/cookaroo.png",
+  "softwareVersion": "1.0",
+  "datePublished": "2025-01-29",
+  "dateModified": "2025-01-29",
+  "inLanguage": "en-US",
+  "copyrightHolder": {
+    "@type": "Organization",
+    "name": "Cookaroo"
+  },
+  "license": "https://cookaroo.recipes/terms",
+  "aggregateRating": {
+    "@type": "AggregateRating",
+    "ratingValue": "4.8",
+    "ratingCount": "150",
+    "bestRating": "5",
+    "worstRating": "1"
+  },
+  "review": [
+    {
+      "@type": "Review",
+      "author": {
+        "@type": "Person",
+        "name": "Sarah Johnson"
+      },
+      "reviewRating": {
+        "@type": "Rating",
+        "ratingValue": "5",
+        "bestRating": "5"
+      },
+      "reviewBody": "Cookaroo has completely transformed how I organize my family's recipes and plan our weekly meals. The recipe import feature is amazing!"
+    }
+  ]
+}

@@ -3,9 +3,10 @@ import React from 'react'
 interface LogoProps {
   className?: string
   size?: 'sm' | 'md' | 'lg' | 'xl'
+  alt?: string
 }
 
-export const Logo: React.FC<LogoProps> = ({ className = '', size = 'md' }) => {
+export const Logo: React.FC<LogoProps> = ({ className = '', size = 'md', alt = 'Cookaroo logo' }) => {
   const sizeClasses = {
     sm: 'w-6 h-6',
     md: 'w-8 h-8',
@@ -16,11 +17,14 @@ export const Logo: React.FC<LogoProps> = ({ className = '', size = 'md' }) => {
   return (
     <div className={`${sizeClasses[size]} ${className}`}>
       <svg
+        role="img"
+        aria-label={alt}
         viewBox="0 0 120 120"
         fill="none"
         xmlns="http://www.w3.org/2000/svg"
         className="w-full h-full"
       >
+        <title>{alt}</title>
         {/* Background Circle with Gradient */}
         <defs>
           <linearGradient id="bgGradient" x1="0%" y1="0%" x2="100%" y2="100%">

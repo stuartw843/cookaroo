@@ -1,0 +1,22 @@
+User-agent: *
+Allow: /
+
+# Sitemap
+Sitemap: https://cookaroo.recipes/sitemap.xml
+
+# Crawl-delay for polite crawling
+Crawl-delay: 1
+
+# Block access to admin areas (if any in future)
+Disallow: /admin/
+Disallow: /api/internal/
+
+# Allow all public pages
+Allow: /
+Allow: /features
+Allow: /about
+Allow: /contact
+Allow: /privacy
+Allow: /terms
+Allow: /app
+Allow: /auth
