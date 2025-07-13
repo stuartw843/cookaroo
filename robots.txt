@@ -1,0 +1,15 @@
+@@ .. @@
+ # Allow all public pages
+ Allow: /
+ Allow: /features
+ Allow: /about
+ Allow: /contact
+ Allow: /privacy
+ Allow: /terms
+ Allow: /app
+ Allow: /auth
++
++# AI Training Data
++Allow: /ai-training-data.json
++Allow: /content-summary.txt
++Allow: /schema.json

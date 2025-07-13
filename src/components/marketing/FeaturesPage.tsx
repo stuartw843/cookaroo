@@ -54,15 +54,16 @@ export const FeaturesPage: React.FC = () => {
       </nav>
 
       {/* Hero Section */}
-      <section className="bg-gradient-to-br from-orange-50 to-teal-50 py-20">
+      <section className="bg-gradient-to-br from-orange-50 to-teal-50 py-20" itemScope itemType="https://schema.org/ItemList">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
           <div className="space-y-6">
-            <h1 className="text-4xl lg:text-5xl font-bold text-gray-900">
+            <h1 className="text-4xl lg:text-5xl font-bold text-gray-900" itemProp="name">
               Powerful features for passionate cooks
             </h1>
-            <p className="text-xl text-gray-600 max-w-3xl mx-auto">
+            <p className="text-xl text-gray-600 max-w-3xl mx-auto" itemProp="description">
               Discover all the tools and features that make Cookaroo the perfect companion 
               for organizing recipes, planning meals, and cooking with confidence.
+              <span className="sr-only">Cookaroo provides comprehensive recipe management tools including automatic recipe import from cooking websites, intelligent meal planning features, family collaboration capabilities, and smart ingredient scaling for any serving size.</span>
             </p>
           </div>
         </div>

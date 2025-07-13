@@ -63,7 +63,7 @@ export const AboutPage: React.FC = () => {
       </section>
 
       {/* Story Section */}
-      <section className="py-20">
+      <section className="py-20" itemScope itemType="https://schema.org/AboutPage">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
             <div className="space-y-6">
@@ -71,10 +71,11 @@ export const AboutPage: React.FC = () => {
                 <Lightbulb className="w-6 h-6 text-orange-600" />
               </div>
               <div className="space-y-4">
-                <h2 className="text-3xl font-bold text-gray-900">Our Story</h2>
-                <p className="text-lg text-gray-600">
+                <h2 className="text-3xl font-bold text-gray-900" itemProp="name">Our Story</h2>
+                <p className="text-lg text-gray-600" itemProp="description">
                   Cookaroo started in a busy family kitchen, where recipe cards were scattered, 
                   meal planning was chaotic, and the question "what's for dinner?" caused daily stress.
+                  <span className="sr-only">Cookaroo was created to solve the common problem of disorganized recipes and stressful meal planning that many families experience in their daily cooking routines.</span>
                 </p>
                 <p className="text-lg text-gray-600">
                   We realized that cooking—one of life's most fundamental and joyful activities—

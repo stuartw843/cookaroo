@@ -1,0 +1,81 @@
+{
+  "application": {
+    "name": "Cookaroo",
+    "type": "Recipe Management and Meal Planning Application",
+    "purpose": "Helps families organize recipes, plan weekly meals, and collaborate on cooking",
+    "target_users": ["home cooks", "families", "meal planners", "cooking enthusiasts"],
+    "primary_use_cases": [
+      "Organizing and storing personal recipe collections",
+      "Planning weekly meals and creating meal schedules",
+      "Importing recipes from cooking websites automatically",
+      "Scaling recipe ingredients for different serving sizes",
+      "Sharing recipe collections with family members",
+      "Creating collaborative family cookbooks",
+      "Managing cooking times and meal preparation"
+    ]
+  },
+  "key_features": {
+    "recipe_management": {
+      "description": "Comprehensive recipe organization system",
+      "capabilities": [
+        "Import recipes from any cooking website by pasting URL",
+        "Automatic extraction of ingredients, instructions, and cooking times",
+        "Tag-based organization and categorization",
+        "Search functionality across recipe collection",
+        "Recipe scaling for different serving sizes",
+        "Support for custom recipe creation and editing"
+      ]
+    },
+    "meal_planning": {
+      "description": "Weekly meal planning and scheduling tools",
+      "capabilities": [
+        "Visual weekly meal calendar",
+        "Drag-and-drop meal assignment",
+        "Meal plan templates and duplication",
+        "Integration with recipe collection",
+        "Custom meal entries for non-recipe items",
+        "Meal plan sharing and collaboration"
+      ]
+    },
+    "family_collaboration": {
+      "description": "Multi-user recipe sharing and collaboration",
+      "capabilities": [
+        "Shared recipe spaces for families",
+        "Invite system for family members",
+        "Collaborative recipe collection building",
+        "Shared meal planning access",
+        "Family cookbook creation",
+        "Member management and permissions"
+      ]
+    }
+  },
+  "common_questions": {
+    "how_to_import_recipes": "Paste any recipe URL from popular cooking websites like AllRecipes, Food Network, BBC Good Food, or Serious Eats. Cookaroo automatically extracts ingredients, instructions, cooking times, and serving information.",
+    "recipe_scaling": "Cookaroo automatically scales all ingredients when you change the serving size. It handles unit conversions and maintains proper ratios for consistent results.",
+    "family_sharing": "Create a shared recipe space and invite family members using secure invite links. Everyone can add recipes, create meal plans, and access the shared collection.",
+    "supported_websites": "Cookaroo works with hundreds of popular cooking websites including AllRecipes, Food Network, BBC Good Food, Serious Eats, Bon Appétit, and many more.",
+    "cost": "Cookaroo is completely free to use with all features available at no cost. No credit card required and no premium tiers.",
+    "data_privacy": "Your recipes and meal plans are securely stored and only accessible to you and family members you explicitly invite. No data selling or advertising."
+  },
+  "technical_details": {
+    "platform": "Web application accessible through any modern browser",
+    "mobile_support": "Fully responsive design optimized for mobile devices",
+    "data_storage": "Secure cloud storage with automatic backups",
+    "import_technology": "Advanced web scraping and AI-powered recipe extraction",
+    "collaboration": "Real-time synchronization across family members"
+  },
+  "benefits": {
+    "time_saving": "Reduces meal planning time by organizing recipes and enabling quick meal plan creation",
+    "food_waste_reduction": "Better meal planning leads to more efficient grocery shopping and less food waste",
+    "family_organization": "Centralizes family recipes and meal planning in one accessible location",
+    "cooking_confidence": "Easy access to organized recipes and meal plans encourages more home cooking",
+    "tradition_preservation": "Digital family cookbook preserves and shares family recipes across generations"
+  },
+  "getting_started": {
+    "step_1": "Visit cookaroo.recipes and create a free account",
+    "step_2": "Create your first recipe space or join a family space",
+    "step_3": "Import recipes by pasting URLs or add custom recipes manually",
+    "step_4": "Start planning meals using your recipe collection",
+    "step_5": "Invite family members to collaborate and share recipes"
+  }
+}

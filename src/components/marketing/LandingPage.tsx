@@ -57,7 +57,7 @@ export const LandingPage: React.FC = () => {
       </nav>
 
       {/* Hero Section */}
-      <section className="relative overflow-hidden bg-gradient-to-br from-orange-50 via-white to-teal-50" aria-labelledby="hero-heading">
+      <section className="relative overflow-hidden bg-gradient-to-br from-orange-50 via-white to-teal-50" aria-labelledby="hero-heading" itemScope itemType="https://schema.org/SoftwareApplication">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20 lg:py-32">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
             <div className="space-y-8">
@@ -67,13 +67,14 @@ export const LandingPage: React.FC = () => {
                   Your culinary companion
                 </div>
                 <h2 id="hero-heading" className="text-4xl lg:text-6xl font-bold text-gray-900 leading-tight">
-                  Organize recipes,
+                  <span itemProp="name">Organize recipes,</span>
                   <span className="text-orange-600"> plan meals</span>,
                   cook together
                 </h2>
-                <p className="text-xl text-gray-600 leading-relaxed">
+                <p className="text-xl text-gray-600 leading-relaxed" itemProp="description">
                   Transform your kitchen chaos into culinary harmony. Store recipes, plan weekly meals, 
                   and collaborate with family and friends—all in one beautiful, intuitive platform.
+                  <span className="sr-only">Cookaroo is a comprehensive recipe management application that helps home cooks organize their favorite recipes, plan weekly meals efficiently, and collaborate with family members on cooking and meal preparation.</span>
                 </p>
               </div>
               
