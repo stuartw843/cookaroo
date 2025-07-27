@@ -23,6 +23,7 @@ interface RecipeDetailProps {
 
 const RecipeDetailModal: React.FC<RecipeDetailProps> = ({ recipe, onClose, onEdit, onDelete, isEditLoading = false }) => {
   const [servings, setServings] = useState(recipe.servings)
+  const [wakeLock, setWakeLock] = useState<WakeLockSentinel | null>(null)
   const { preferences } = useUserPreferences()
   const scaleFactor = servings / recipe.servings
   
@@ -47,6 +48,57 @@ const RecipeDetailModal: React.FC<RecipeDetailProps> = ({ recipe, onClose, onEdi
     }
   }, [])
 
+  // Request wake lock to keep screen on while cooking
+  useEffect(() => {
+    const requestWakeLock = async () => {
+      try {
+        if ('wakeLock' in navigator) {
+          const wakeLockSentinel = await navigator.wakeLock.request('screen')
+          setWakeLock(wakeLockSentinel)
+          console.log('Screen wake lock activated for recipe viewing')
+          
+          wakeLockSentinel.addEventListener('release', () => {
+            console.log('Screen wake lock released')
+            setWakeLock(null)
+          })
+        }
+      } catch (error) {
+        console.log('Wake lock request failed:', error)
+      }
+    }
+
+    requestWakeLock()
+
+    // Release wake lock when component unmounts
+    return () => {
+      if (wakeLock) {
+        wakeLock.release()
+        setWakeLock(null)
+      }
+    }
+  }, [])
+
+  // Re-request wake lock if it gets released (e.g., tab becomes inactive)
+  useEffect(() => {
+    const handleVisibilityChange = async () => {
+      if (document.visibilityState === 'visible' && !wakeLock) {
+        try {
+          if ('wakeLock' in navigator) {
+            const wakeLockSentinel = await navigator.wakeLock.request('screen')
+            setWakeLock(wakeLockSentinel)
+            console.log('Screen wake lock re-activated')
+          }
+        } catch (error) {
+          console.log('Wake lock re-request failed:', error)
+        }
+      }
+    }
+
+    document.addEventListener('visibilitychange', handleVisibilityChange)
+    return () => {
+      document.removeEventListener('visibilitychange', handleVisibilityChange)
+    }
+  }, [wakeLock])
   // Handle outside click
   const handleBackdropClick = (e: React.MouseEvent) => {
     if (e.target === e.currentTarget) {
