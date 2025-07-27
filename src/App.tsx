@@ -13,6 +13,7 @@ import { ContactPage } from './components/marketing/ContactPage'
 import { PrivacyPage } from './components/marketing/PrivacyPage'
 import { TermsPage } from './components/marketing/TermsPage'
 import { BlogPage } from './components/marketing/BlogPage'
+import { BlogPostPage } from './components/marketing/BlogPostPage'
 
 // App components
 import { AuthForm } from './components/auth/AuthForm'
@@ -560,7 +561,7 @@ function App() {
             <Route path="/about" element={<AboutPage />} />
             <Route path="/contact" element={<ContactPage />} />
             <Route path="/blog" element={<BlogPage />} />
-            <Route path="/blog" element={<BlogPage />} />
+            <Route path="/blog/:id" element={<BlogPostPage />} />
             <Route path="/privacy" element={<PrivacyPage />} />
             <Route path="/terms" element={<TermsPage />} />
             
