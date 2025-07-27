@@ -30,6 +30,9 @@ export const AboutPage: React.FC = () => {
               <Link to="/about" className="text-orange-600 font-medium">
                 About
               </Link>
+              <Link to="/blog" className="text-gray-600 hover:text-gray-900 transition-colors">
+                Blog
+              </Link>
               <Link to="/contact" className="text-gray-600 hover:text-gray-900 transition-colors">
                 Contact
               </Link>
