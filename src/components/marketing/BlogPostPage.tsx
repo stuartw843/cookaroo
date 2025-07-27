@@ -1836,27 +1836,39 @@ export const BlogPostPage: React.FC = () => {
       </nav>
 
       {/* Article Header */}
-                <div className="prose prose-lg max-w-none prose-headings:text-gray-900 prose-p:text-gray-700 prose-p:leading-relaxed prose-li:text-gray-700 prose-strong:text-gray-900 prose-a:text-orange-600 prose-a:no-underline hover:prose-a:underline">
-                  <ReactMarkdown
-                    components={{
-                      h1: ({ children }) => <h1 className="text-3xl font-bold text-gray-900 mt-8 mb-4">{children}</h1>,
-                      h2: ({ children }) => <h2 className="text-2xl font-bold text-gray-900 mt-6 mb-3">{children}</h2>,
-                      h3: ({ children }) => <h3 className="text-xl font-semibold text-gray-900 mt-4 mb-2">{children}</h3>,
-                      p: ({ children }) => <p className="text-gray-700 mb-4 leading-relaxed">{children}</p>,
-                      ul: ({ children }) => <ul className="list-disc list-inside mb-4 space-y-2">{children}</ul>,
-                      ol: ({ children }) => <ol className="list-decimal list-inside mb-4 space-y-2">{children}</ol>,
-                      li: ({ children }) => <li className="text-gray-700">{children}</li>,
-                      strong: ({ children }) => <strong className="font-semibold text-gray-900">{children}</strong>,
-                      em: ({ children }) => <em className="italic text-gray-700">{children}</em>,
-                      blockquote: ({ children }) => <blockquote className="border-l-4 border-orange-500 pl-4 italic text-gray-600 my-4">{children}</blockquote>,
-                      code: ({ children }) => <code className="bg-gray-100 px-2 py-1 rounded text-sm font-mono text-gray-800">{children}</code>,
-                      pre: ({ children }) => <pre className="bg-gray-100 p-4 rounded-lg overflow-x-auto mb-4">{children}</pre>
-                    }}
-                  >
-                    {post.content}
-                  </ReactMarkdown>
-                </div>
+      <article className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+        <header className="mb-12">
+          <div className="space-y-6">
+            <div className="flex items-center space-x-4 text-sm text-gray-500">
+              <div className="flex items-center space-x-1">
+                <Calendar className="w-4 h-4" />
+                <span>{post.date}</span>
               </div>
+              <span className="px-3 py-1 bg-orange-100 text-orange-800 rounded-full text-xs font-medium">
+                {post.category}
+              </span>
+              
+              <div className="prose prose-lg max-w-none prose-headings:text-gray-900 prose-p:text-gray-700 prose-p:leading-relaxed prose-li:text-gray-700 prose-strong:text-gray-900 prose-a:text-orange-600 prose-a:no-underline hover:prose-a:underline">
+                <ReactMarkdown
+                  components={{
+                    h1: ({ children }) => <h1 className="text-3xl font-bold text-gray-900 mt-8 mb-4">{children}</h1>,
+                    h2: ({ children }) => <h2 className="text-2xl font-bold text-gray-900 mt-6 mb-3">{children}</h2>,
+                    h3: ({ children }) => <h3 className="text-xl font-semibold text-gray-900 mt-4 mb-2">{children}</h3>,
+                    p: ({ children }) => <p className="text-gray-700 mb-4 leading-relaxed">{children}</p>,
+                    ul: ({ children }) => <ul className="list-disc list-inside mb-4 space-y-2">{children}</ul>,
+                    ol: ({ children }) => <ol className="list-decimal list-inside mb-4 space-y-2">{children}</ol>,
+                    li: ({ children }) => <li className="text-gray-700">{children}</li>,
+                    strong: ({ children }) => <strong className="font-semibold text-gray-900">{children}</strong>,
+                    em: ({ children }) => <em className="italic text-gray-700">{children}</em>,
+                    blockquote: ({ children }) => <blockquote className="border-l-4 border-orange-500 pl-4 italic text-gray-600 my-4">{children}</blockquote>,
+                    code: ({ children }) => <code className="bg-gray-100 px-2 py-1 rounded text-sm font-mono text-gray-800">{children}</code>,
+                    pre: ({ children }) => <pre className="bg-gray-100 p-4 rounded-lg overflow-x-auto mb-4">{children}</pre>
+                  }}
+                >
+                  {post.content}
+                </ReactMarkdown>
+              </div>
+              
               <div className="flex items-center space-x-1">
                 <Clock className="w-4 h-4" />
                 <span>{post.readTime}</span>
