@@ -328,7 +328,7 @@ export const LandingPage: React.FC = () => {
             </div>
             
             <p className="text-orange-100 text-sm">
-              No credit card required • Free forever • Start in 30 seconds
+              No credit card required • Free to start • Start in 30 seconds
             </p>
           </div>
         </div>
