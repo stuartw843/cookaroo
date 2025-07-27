@@ -204,7 +204,7 @@ export const AboutPage: React.FC = () => {
                   </div>
                   <div>
                     <h3 className="font-semibold text-gray-900 mb-1">Free to Use</h3>
-                    <p className="text-gray-600">All core features are free forever. No hidden costs or premium tiers.</p>
+                    <p className="text-gray-600">All core features are free to start. No hidden costs or premium tiers.</p>
                   </div>
                 </div>
               </div>
