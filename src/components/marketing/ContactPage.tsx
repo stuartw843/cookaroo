@@ -208,7 +208,7 @@ export const ContactPage: React.FC = () => {
                   <div className="space-y-3">
                     <div>
                       <h4 className="font-medium">Is Cookaroo really free?</h4>
-                      <p className="text-orange-100 text-sm">Yes! All core features are free forever.</p>
+                      <p className="text-orange-100 text-sm">Yes! All core features are free to start.</p>
                     </div>
                     <div>
                       <h4 className="font-medium">Can I share recipes with family?</h4>
