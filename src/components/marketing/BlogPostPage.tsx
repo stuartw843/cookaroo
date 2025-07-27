@@ -1855,7 +1855,7 @@ export const BlogPostPage: React.FC = () => {
                   >
                     {post.content}
                   </ReactMarkdown>
-                </time>
+                </div>
               </div>
               <div className="flex items-center space-x-1">
                 <Clock className="w-4 h-4" />
