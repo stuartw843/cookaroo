@@ -138,6 +138,9 @@ export type Database = {
           tags: string[]
           created_at: string
           updated_at: string
+          ai_collection_id: string | null
+          generation_prompt: string | null
+          is_ai_generated: boolean
         }
         Insert: {
           id?: string
@@ -154,6 +157,9 @@ export type Database = {
           tags?: string[]
           created_at?: string
           updated_at?: string
+          ai_collection_id?: string | null
+          generation_prompt?: string | null
+          is_ai_generated?: boolean
         }
         Update: {
           id?: string
@@ -170,6 +176,9 @@ export type Database = {
           tags?: string[]
           created_at?: string
           updated_at?: string
+          ai_collection_id?: string | null
+          generation_prompt?: string | null
+          is_ai_generated?: boolean
         }
       }
       ingredients: {
@@ -318,6 +327,32 @@ export type Database = {
           custom_text?: string | null
           notes?: string | null
           created_at?: string
+        }
+      }
+      ai_recipe_collections: {
+        Row: {
+          id: string
+          space_id: string
+          name: string
+          system_prompt: string
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          space_id: string
+          name: string
+          system_prompt: string
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          space_id?: string
+          name?: string
+          system_prompt?: string
+          created_at?: string
+          updated_at?: string
         }
       }
     }
