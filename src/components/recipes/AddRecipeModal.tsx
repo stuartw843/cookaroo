@@ -4,8 +4,11 @@ import { useForm, useFieldArray } from 'react-hook-form'
 import { Button } from '../ui/Button'
 import { Input } from '../ui/Input'
 import { X, Plus, Link, Type, Clock, Users, Upload, Camera, Image as ImageIcon, Trash2, ArrowLeft, ArrowRight, CheckCircle } from 'lucide-react'
+import { Brain, Sparkles, Wand2 } from 'lucide-react'
 import { parseRecipeFromText, parseIngredientLine, scrapeRecipeFromUrl } from '../../utils/recipeParser'
 import { useSpacesContext } from '../../contexts/SpacesContext'
+import { useAIRecipeCollections } from '../../hooks/useAIRecipeCollections'
+import { AIRecipeCollections } from '../ai/AIRecipeCollections'
 import toast from 'react-hot-toast'
 
 interface AddRecipeModalProps {
@@ -29,8 +32,8 @@ interface RecipeFormData {
   instructions: { instruction: string }[]
 }
 
-type WizardStep = 'method' | 'url-input' | 'image-input' | 'processing' | 'recipe-details' | 'review'
-type InputMethod = 'url' | 'image' | 'manual'
+type WizardStep = 'method' | 'url-input' | 'image-input' | 'ai-input' | 'processing' | 'recipe-details' | 'review'
+type InputMethod = 'url' | 'image' | 'manual' | 'ai'
 
 interface WizardState {
   step: WizardStep
@@ -40,6 +43,8 @@ interface WizardState {
   imagePreview: string
   extractedData: any
   isProcessing: boolean
+  selectedCollectionId: string | null
+  aiPrompt: string
 }
 
 export const AddRecipeModal: React.FC<AddRecipeModalProps> = ({ 
@@ -56,7 +61,9 @@ export const AddRecipeModal: React.FC<AddRecipeModalProps> = ({
     imageFile: null,
     imagePreview: '',
     extractedData: null,
-    isProcessing: false
+    isProcessing: false,
+    selectedCollectionId: null,
+    aiPrompt: ''
   })
 
   const [tags, setTags] = useState<string[]>([])
@@ -68,6 +75,7 @@ export const AddRecipeModal: React.FC<AddRecipeModalProps> = ({
   const modalContentRef = useRef<HTMLDivElement>(null)
   
   const { currentSpace } = useSpacesContext()
+  const { generateRecipe } = useAIRecipeCollections()
   const isEditing = !!recipe
   
   const { register, handleSubmit, control, reset, setValue, watch, formState: { errors, isDirty } } = useForm<RecipeFormData>({
@@ -108,7 +116,9 @@ export const AddRecipeModal: React.FC<AddRecipeModalProps> = ({
         imageFile: null,
         imagePreview: '',
         extractedData: null,
-        isProcessing: false
+        isProcessing: false,
+        selectedCollectionId: null,
+        aiPrompt: ''
       })
       setInitialFormData(null)
     }
@@ -124,7 +134,9 @@ export const AddRecipeModal: React.FC<AddRecipeModalProps> = ({
         imageFile: null,
         imagePreview: '',
         extractedData: null,
-        isProcessing: false
+        isProcessing: false,
+        selectedCollectionId: null,
+        aiPrompt: ''
       })
       setTags([])
       setTagInput('')
@@ -278,7 +290,10 @@ export const AddRecipeModal: React.FC<AddRecipeModalProps> = ({
     setWizardState(prev => ({ 
       ...prev, 
       method, 
-      step: method === 'manual' ? 'recipe-details' : method === 'url' ? 'url-input' : 'image-input'
+      step: method === 'manual' ? 'recipe-details' : 
+            method === 'url' ? 'url-input' : 
+            method === 'image' ? 'image-input' : 
+            method === 'ai' ? 'ai-input' : 'recipe-details'
     }))
     
     // Scroll to top when entering recipe-details for manual entry
@@ -351,6 +366,43 @@ export const AddRecipeModal: React.FC<AddRecipeModalProps> = ({
 
     // Process OCR
     processImageOCR(file)
+  }
+
+  const handleAIGenerate = async () => {
+    if (!wizardState.selectedCollectionId) {
+      toast.error('Please select an AI collection')
+      return
+    }
+
+    setWizardState(prev => ({ ...prev, isProcessing: true, step: 'processing' }))
+    
+    try {
+      const generatedRecipe = await generateRecipe(
+        wizardState.selectedCollectionId,
+        wizardState.aiPrompt.trim() || undefined
+      )
+      
+      setWizardState(prev => ({ 
+        ...prev, 
+        extractedData: generatedRecipe,
+        isProcessing: false,
+        step: 'recipe-details'
+      }))
+      
+      // Populate form with generated data
+      populateFormWithRecipe(generatedRecipe)
+      
+      // Scroll to top when transitioning to recipe details
+      setTimeout(() => {
+        modalContentRef.current?.scrollTo({ top: 0, behavior: 'smooth' })
+      }, 100)
+      
+      toast.success('Recipe generated successfully! Review and edit as needed.')
+    } catch (error) {
+      console.error('AI generation error:', error)
+      toast.error(error instanceof Error ? error.message : 'Failed to generate recipe')
+      setWizardState(prev => ({ ...prev, isProcessing: false, step: 'ai-input' }))
+    }
   }
 
   const processImageOCR = async (file: File) => {
@@ -452,6 +504,7 @@ export const AddRecipeModal: React.FC<AddRecipeModalProps> = ({
     switch (wizardState.step) {
       case 'url-input':
       case 'image-input':
+      case 'ai-input':
         setWizardState(prev => ({ ...prev, step: 'method' }))
         break
       case 'recipe-details':
@@ -460,7 +513,9 @@ export const AddRecipeModal: React.FC<AddRecipeModalProps> = ({
         } else {
           setWizardState(prev => ({ 
             ...prev, 
-            step: wizardState.method === 'url' ? 'url-input' : 'image-input' 
+            step: wizardState.method === 'url' ? 'url-input' : 
+                  wizardState.method === 'image' ? 'image-input' : 
+                  wizardState.method === 'ai' ? 'ai-input' : 'method'
           }))
         }
         break
@@ -504,6 +559,9 @@ export const AddRecipeModal: React.FC<AddRecipeModalProps> = ({
         cook_time: data.cook_time || undefined,
         servings: data.servings,
         tags: tags,
+        ai_collection_id: wizardState.selectedCollectionId || undefined,
+        generation_prompt: wizardState.aiPrompt.trim() || undefined,
+        is_ai_generated: wizardState.method === 'ai',
         ingredients: data.ingredients
           .filter(ing => ing.name.trim())
           .map(ing => ({
@@ -542,6 +600,7 @@ export const AddRecipeModal: React.FC<AddRecipeModalProps> = ({
       case 'method': return isEditing ? 'Edit Recipe' : 'How would you like to add your recipe?'
       case 'url-input': return 'Import from URL'
       case 'image-input': return 'Upload Recipe Image'
+      case 'ai-input': return 'Generate with AI'
       case 'processing': return 'Processing...'
       case 'recipe-details': return 'Recipe Details'
       case 'review': return 'Review Recipe'
@@ -608,7 +667,7 @@ export const AddRecipeModal: React.FC<AddRecipeModalProps> = ({
                   Choose how you'd like to add your recipe
                 </p>
                 
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
                   <button
                     onClick={() => handleMethodSelect('url')}
                     className="p-6 border-2 border-gray-200 rounded-xl hover:border-orange-300 hover:bg-orange-50 transition-all group"
@@ -628,6 +687,17 @@ export const AddRecipeModal: React.FC<AddRecipeModalProps> = ({
                     <h3 className="font-semibold text-gray-900 mb-2">Scan Recipe Image</h3>
                     <p className="text-sm text-gray-600">
                       Upload or take a photo of a recipe
+                    </p>
+                  </button>
+                  
+                  <button
+                    onClick={() => handleMethodSelect('ai')}
+                    className="p-6 border-2 border-gray-200 rounded-xl hover:border-orange-300 hover:bg-orange-50 transition-all group"
+                  >
+                    <Brain className="w-12 h-12 text-gray-400 group-hover:text-orange-500 mx-auto mb-4" />
+                    <h3 className="font-semibold text-gray-900 mb-2">Generate with AI</h3>
+                    <p className="text-sm text-gray-600">
+                      Use AI to generate themed recipes
                     </p>
                   </button>
                   
@@ -747,18 +817,89 @@ export const AddRecipeModal: React.FC<AddRecipeModalProps> = ({
               </div>
             )}
 
+            {/* Step 2c: AI Input */}
+            {wizardState.step === 'ai-input' && (
+              <div className="space-y-6">
+                <div className="bg-purple-50 border border-purple-200 rounded-lg p-4">
+                  <div className="flex items-start space-x-3">
+                    <Brain className="w-5 h-5 text-purple-600 mt-0.5 flex-shrink-0" />
+                    <div className="text-sm text-purple-800">
+                      <p className="font-medium mb-1">AI Recipe Generation:</p>
+                      <p>Select an AI collection that defines the style and constraints for your recipe. 
+                         You can optionally add a specific prompt for this recipe.</p>
+                    </div>
+                  </div>
+                </div>
+                
+                <AIRecipeCollections
+                  mode="selection"
+                  selectedCollectionId={wizardState.selectedCollectionId}
+                  onSelectCollection={(collectionId) => 
+                    setWizardState(prev => ({ ...prev, selectedCollectionId: collectionId }))
+                  }
+                />
+                
+                {wizardState.selectedCollectionId && (
+                  <Card className="border-orange-200">
+                    <CardHeader>
+                      <div className="flex items-center space-x-2">
+                        <Wand2 className="w-5 h-5 text-orange-600" />
+                        <h3 className="font-semibold text-gray-900">Recipe Generation Prompt</h3>
+                      </div>
+                      <p className="text-gray-600 text-sm">
+                        Optional: Add a specific request for this recipe
+                      </p>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="space-y-4">
+                        <textarea
+                          className="w-full h-24 p-3 border border-gray-300 rounded-lg focus:ring-orange-500 focus:border-orange-500"
+                          placeholder="e.g., 'A spicy beef noodle soup recipe' or 'A vegetarian version of kung pao chicken' (leave blank for surprise recipe)"
+                          value={wizardState.aiPrompt}
+                          onChange={(e) => setWizardState(prev => ({ ...prev, aiPrompt: e.target.value }))}
+                          disabled={wizardState.isProcessing}
+                        />
+                        
+                        <div className="flex justify-end space-x-3">
+                          <Button 
+                            variant="outline" 
+                            onClick={goBack}
+                            disabled={wizardState.isProcessing}
+                          >
+                            Back
+                          </Button>
+                          <Button 
+                            onClick={handleAIGenerate} 
+                            loading={wizardState.isProcessing}
+                            disabled={!wizardState.selectedCollectionId || wizardState.isProcessing}
+                            className="bg-gradient-to-r from-purple-500 to-orange-500 hover:from-purple-600 hover:to-orange-600"
+                          >
+                            <Sparkles className="w-4 h-4 mr-2" />
+                            Generate Recipe
+                          </Button>
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+                )}
+              </div>
+            )}
+
             {/* Step 3: Processing */}
             {wizardState.step === 'processing' && (
               <div className="space-y-6 text-center py-12">
                 <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-orange-600 mx-auto"></div>
                 <div>
                   <h3 className="text-lg font-semibold text-gray-900 mb-2">
-                    {wizardState.method === 'url' ? 'Importing Recipe...' : 'Processing Image...'}
+                    {wizardState.method === 'url' ? 'Importing Recipe...' : 
+                     wizardState.method === 'image' ? 'Processing Image...' : 
+                     wizardState.method === 'ai' ? 'Generating Recipe...' : 'Processing...'}
                   </h3>
                   <p className="text-gray-600">
-                    {wizardState.method === 'url' 
-                      ? 'Extracting recipe details from the website...' 
-                      : 'Our AI is reading the recipe from your image. This may take a moment...'
+                    {wizardState.method === 'url' ? 'Extracting recipe details from the website...' : 
+                     wizardState.method === 'image' ? 'Our AI is reading the recipe from your image. This may take a moment...' :
+                     wizardState.method === 'ai' ? 'AI is creating a unique recipe for your collection. This may take 15-30 seconds...' :
+                     'Processing your request...'
                     }
                   </p>
                 </div>
@@ -778,12 +919,27 @@ export const AddRecipeModal: React.FC<AddRecipeModalProps> = ({
             {/* Step 4: Recipe Details Form */}
             {wizardState.step === 'recipe-details' && (
               <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
-                {/* Success message for extracted recipes */}
+                {/* Success message for extracted/generated recipes */}
                 {wizardState.extractedData && !isEditing && (
-                  <div className="bg-green-50 border border-green-200 rounded-lg p-4 flex items-center space-x-3">
-                    <CheckCircle className="w-5 h-5 text-green-600" />
-                    <p className="text-sm text-green-800">
-                      <strong>Recipe extracted successfully!</strong> Review and edit the details below as needed.
+                  <div className={`border rounded-lg p-4 flex items-center space-x-3 ${
+                    wizardState.method === 'ai' 
+                      ? 'bg-purple-50 border-purple-200' 
+                      : 'bg-green-50 border-green-200'
+                  }`}>
+                    {wizardState.method === 'ai' ? (
+                      <Sparkles className="w-5 h-5 text-purple-600" />
+                    ) : (
+                      <CheckCircle className="w-5 h-5 text-green-600" />
+                    )}
+                    <p className={`text-sm ${
+                      wizardState.method === 'ai' ? 'text-purple-800' : 'text-green-800'
+                    }`}>
+                      <strong>
+                        {wizardState.method === 'ai' 
+                          ? 'Recipe generated successfully!' 
+                          : 'Recipe extracted successfully!'
+                        }
+                      </strong> Review and edit the details below as needed.
                     </p>
                   </div>
                 )}
@@ -1074,11 +1230,13 @@ export const AddRecipeModal: React.FC<AddRecipeModalProps> = ({
                   >
                     Cancel
                   </Button>
-                  <Button 
+                  <Button
                     type="submit" 
                     loading={wizardState.isProcessing} 
                     disabled={wizardState.isProcessing}
+                    className={wizardState.method === 'ai' ? 'bg-gradient-to-r from-purple-500 to-orange-500 hover:from-purple-600 hover:to-orange-600' : ''}
                   >
+                    {wizardState.method === 'ai' && <Sparkles className="w-4 h-4 mr-2" />}
                     {isEditing ? 'Update Recipe' : 'Add Recipe'}
                   </Button>
                 </div>

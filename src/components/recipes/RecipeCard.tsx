@@ -1,6 +1,6 @@
 import React from 'react'
 import { Card, CardContent } from '../ui/Card'
-import { Clock, Users, ExternalLink, Tag, ChefHat } from 'lucide-react'
+import { Clock, Users, ExternalLink, Tag, ChefHat, Sparkles, Brain } from 'lucide-react'
 import { Database } from '../../lib/supabase'
 import { useUserPreferences } from '../../hooks/useUserPreferences'
 import { convertMeasurement, formatQuantity } from '../../utils/measurements'
@@ -41,7 +41,17 @@ export const RecipeCard: React.FC<RecipeCardProps> = ({ recipe, onClick, viewMod
           
           <div className="flex-1 min-w-0">
             <h3 className="font-semibold text-base sm:text-lg text-gray-900 line-clamp-2 leading-tight">
-              {recipe.title}
+              <div className="flex items-start justify-between space-x-2">
+                <span className="flex-1">{recipe.title}</span>
+                {recipe.is_ai_generated && (
+                  <div className="flex-shrink-0 mt-0.5">
+                    <div className="inline-flex items-center px-2 py-1 rounded-full text-xs bg-gradient-to-r from-purple-100 to-orange-100 text-purple-800 border border-purple-200">
+                      <Sparkles className="w-3 h-3 mr-1" />
+                      AI
+                    </div>
+                  </div>
+                )}
+              </div>
             </h3>
             {recipe.description && (
               <p className="text-gray-600 text-sm mt-2 line-clamp-2">
@@ -109,7 +119,17 @@ export const RecipeCard: React.FC<RecipeCardProps> = ({ recipe, onClick, viewMod
         <CardContent className="space-y-3 flex-1 flex flex-col p-4 sm:p-6">
           <div className="flex-1">
             <h3 className="font-semibold text-base sm:text-lg text-gray-900 line-clamp-2 leading-tight">
-              {recipe.title}
+              <div className="flex items-center space-x-2">
+                <span className="flex-1">{recipe.title}</span>
+                {recipe.is_ai_generated && (
+                  <div className="flex-shrink-0">
+                    <div className="inline-flex items-center px-2 py-1 rounded-full text-xs bg-gradient-to-r from-purple-100 to-orange-100 text-purple-800 border border-purple-200">
+                      <Sparkles className="w-3 h-3 mr-1" />
+                      AI
+                    </div>
+                  </div>
+                )}
+              </div>
             </h3>
             {recipe.description && (
               <p className="text-gray-600 text-sm mt-2 line-clamp-2">

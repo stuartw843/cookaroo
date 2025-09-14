@@ -27,13 +27,14 @@ import { RecipeCard } from './components/recipes/RecipeCard'
 import { AddRecipeModal } from './components/recipes/AddRecipeModal'
 import { AddRecipePage } from './components/recipes/AddRecipePage'
 import { RecipeDetail } from './components/recipes/RecipeDetail'
+import { AIRecipeCollections } from './components/ai/AIRecipeCollections'
 import { Input } from './components/ui/Input'
 import { Button } from './components/ui/Button'
 import { useRecipes } from './hooks/useRecipes'
 import { useSpacesContext } from './contexts/SpacesContext'
-import { Search, Filter, Grid, List, Plus, Settings, LogOut } from 'lucide-react'
+import { Search, Filter, Grid, List, Plus, Settings, LogOut, Brain } from 'lucide-react'
 
-type ViewMode = 'recipes' | 'mealplanner' | 'settings'
+type ViewMode = 'recipes' | 'mealplanner' | 'settings' | 'ai-collections'
 
 const Dashboard: React.FC = () => {
   const navigate = useNavigate()
@@ -190,6 +191,8 @@ const Dashboard: React.FC = () => {
         return <SettingsPage />
       case 'mealplanner':
         return <MealPlannerView />
+      case 'ai-collections':
+        return <AIRecipeCollections />
       default:
         return (
           <>

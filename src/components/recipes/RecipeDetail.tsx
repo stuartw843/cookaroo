@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react'
 import { createPortal } from 'react-dom'
 import { Button } from '../ui/Button'
 import { Card, CardContent, CardHeader } from '../ui/Card'
-import { X, Clock, Users, ExternalLink, Copy, Share2, Edit, Trash2, Settings } from 'lucide-react'
+import { X, Clock, Users, ExternalLink, Copy, Share2, Edit, Trash2, Settings, Sparkles, Brain } from 'lucide-react'
 import { Database } from '../../lib/supabase'
 import { formatQuantity, scaleRecipe, convertMeasurement } from '../../utils/measurements'
 import { useUserPreferences } from '../../hooks/useUserPreferences'
@@ -155,7 +155,15 @@ ${recipe.instructions.map((inst, index) => `${index + 1}. ${inst.instruction}`).
         onClick={(e) => e.stopPropagation()}
       >
         <div className="flex items-center justify-between p-4 sm:p-6 border-b border-gray-200">
-          <h2 className="text-xl sm:text-2xl font-bold text-gray-900 truncate mr-4">{recipe.title}</h2>
+          <div className="flex items-center space-x-3 flex-1 min-w-0 mr-4">
+            <h2 className="text-xl sm:text-2xl font-bold text-gray-900 truncate">{recipe.title}</h2>
+            {recipe.is_ai_generated && (
+              <div className="inline-flex items-center px-3 py-1 rounded-full text-sm bg-gradient-to-r from-purple-100 to-orange-100 text-purple-800 border border-purple-200 flex-shrink-0">
+                <Sparkles className="w-4 h-4 mr-1" />
+                AI Generated
+              </div>
+            )}
+          </div>
           <div className="flex items-center space-x-1 sm:space-x-2">
             {/* Mobile: Show only icons, Desktop: Show icons + text */}
             <Button
@@ -221,6 +229,19 @@ ${recipe.instructions.map((inst, index) => `${index + 1}. ${inst.instruction}`).
                   alt={recipe.title}
                   className="w-full h-full object-cover"
                 />
+              </div>
+            )}
+            
+            {/* AI Generation Info */}
+            {recipe.is_ai_generated && recipe.generation_prompt && (
+              <div className="mt-6 p-4 bg-gradient-to-r from-purple-50 to-orange-50 border border-purple-200 rounded-lg">
+                <div className="flex items-start space-x-3">
+                  <Brain className="w-5 h-5 text-purple-600 mt-0.5 flex-shrink-0" />
+                  <div>
+                    <h4 className="font-semibold text-purple-900 mb-1">AI Generation Prompt</h4>
+                    <p className="text-purple-800 text-sm italic">"{recipe.generation_prompt}"</p>
+                  </div>
+                </div>
               </div>
             )}
             

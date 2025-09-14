@@ -4,9 +4,12 @@ import { useNavigate } from 'react-router-dom'
 import { Button } from '../ui/Button'
 import { Input } from '../ui/Input'
 import { X, Plus, Link, Type, Clock, Users, Upload, Camera, Image as ImageIcon, Trash2, ArrowLeft, ArrowRight, CheckCircle } from 'lucide-react'
+import { Brain, Sparkles, Wand2 } from 'lucide-react'
 import { parseRecipeFromText, parseIngredientLine, scrapeRecipeFromUrl } from '../../utils/recipeParser'
 import { useSpacesContext } from '../../contexts/SpacesContext'
 import { useRecipes } from '../../hooks/useRecipes'
+import { useAIRecipeCollections } from '../../hooks/useAIRecipeCollections'
+import { AIRecipeCollections } from '../ai/AIRecipeCollections'
 import toast from 'react-hot-toast'
 
 interface RecipeFormData {
@@ -22,8 +25,8 @@ interface RecipeFormData {
   instructions: { instruction: string }[]
 }
 
-type WizardStep = 'method' | 'url-input' | 'image-input' | 'processing' | 'recipe-details'
-type InputMethod = 'url' | 'image' | 'manual'
+type WizardStep = 'method' | 'url-input' | 'image-input' | 'ai-input' | 'processing' | 'recipe-details'
+type InputMethod = 'url' | 'image' | 'manual' | 'ai'
 
 interface WizardState {
   step: WizardStep
@@ -33,6 +36,8 @@ interface WizardState {
   imagePreview: string
   extractedData: any
   isProcessing: boolean
+  selectedCollectionId: string | null
+  aiPrompt: string
 }
 
 const STORAGE_KEY = 'addRecipeWizardState'
@@ -56,7 +61,9 @@ export const AddRecipePage: React.FC = () => {
             imageFile: null, // Don't restore file objects
             imagePreview: parsed.imagePreview || '',
             extractedData: parsed.extractedData || null,
-            isProcessing: false
+            isProcessing: false,
+            selectedCollectionId: parsed.selectedCollectionId || null,
+            aiPrompt: parsed.aiPrompt || ''
           }
         }
       } catch (error) {
@@ -71,7 +78,9 @@ export const AddRecipePage: React.FC = () => {
       imageFile: null,
       imagePreview: '',
       extractedData: null,
-      isProcessing: false
+      isProcessing: false,
+      selectedCollectionId: null,
+      aiPrompt: ''
     }
   })
 
@@ -94,6 +103,7 @@ export const AddRecipePage: React.FC = () => {
   const cameraInputRef = useRef<HTMLInputElement>(null)
   
   const { currentSpace } = useSpacesContext()
+  const { generateRecipe } = useAIRecipeCollections()
   
   const { register, handleSubmit, control, reset, setValue, watch, formState: { errors } } = useForm<RecipeFormData>({
     defaultValues: {
@@ -193,7 +203,10 @@ export const AddRecipePage: React.FC = () => {
     setWizardState(prev => ({ 
       ...prev, 
       method, 
-      step: method === 'manual' ? 'recipe-details' : method === 'url' ? 'url-input' : 'image-input'
+      step: method === 'manual' ? 'recipe-details' : 
+            method === 'url' ? 'url-input' : 
+            method === 'image' ? 'image-input' : 
+            method === 'ai' ? 'ai-input' : 'recipe-details'
     }))
   }
 
@@ -251,6 +264,35 @@ export const AddRecipePage: React.FC = () => {
 
     // Process OCR
     processImageOCR(file)
+  }
+
+  const handleAIGenerate = async () => {
+    if (!wizardState.selectedCollectionId) {
+      toast.error('Please select an AI collection')
+      return
+    }
+
+    setWizardState(prev => ({ ...prev, isProcessing: true, step: 'processing' }))
+    
+    try {
+      const generatedRecipe = await generateRecipe(
+        wizardState.selectedCollectionId,
+        wizardState.aiPrompt.trim() || undefined
+      )
+      
+      setWizardState(prev => ({ 
+        ...prev, 
+        extractedData: generatedRecipe,
+        isProcessing: false,
+        step: 'recipe-details'
+      }))
+      
+      toast.success('Recipe generated successfully! Review and edit as needed.')
+    } catch (error) {
+      console.error('AI generation error:', error)
+      toast.error(error instanceof Error ? error.message : 'Failed to generate recipe')
+      setWizardState(prev => ({ ...prev, isProcessing: false, step: 'ai-input' }))
+    }
   }
 
   const processImageOCR = async (file: File) => {
@@ -344,6 +386,7 @@ export const AddRecipePage: React.FC = () => {
     switch (wizardState.step) {
       case 'url-input':
       case 'image-input':
+      case 'ai-input':
         setWizardState(prev => ({ ...prev, step: 'method' }))
         break
       case 'recipe-details':
@@ -352,7 +395,9 @@ export const AddRecipePage: React.FC = () => {
         } else {
           setWizardState(prev => ({ 
             ...prev, 
-            step: wizardState.method === 'url' ? 'url-input' : 'image-input' 
+            step: wizardState.method === 'url' ? 'url-input' : 
+                  wizardState.method === 'image' ? 'image-input' : 
+                  wizardState.method === 'ai' ? 'ai-input' : 'method'
           }))
         }
         break
@@ -430,6 +475,7 @@ export const AddRecipePage: React.FC = () => {
       case 'method': return 'How would you like to add your recipe?'
       case 'url-input': return 'Import from URL'
       case 'image-input': return 'Upload Recipe Image'
+      case 'ai-input': return 'Generate with AI'
       case 'processing': return 'Processing...'
       case 'recipe-details': return 'Recipe Details'
       default: return 'Add Recipe'
@@ -472,7 +518,7 @@ export const AddRecipePage: React.FC = () => {
             {/* Progress indicator */}
             <div className="hidden sm:flex items-center space-x-2">
               <div className={`w-2 h-2 rounded-full ${wizardState.step === 'method' ? 'bg-orange-500' : 'bg-gray-300'}`} />
-              <div className={`w-2 h-2 rounded-full ${['url-input', 'image-input'].includes(wizardState.step) ? 'bg-orange-500' : 'bg-gray-300'}`} />
+              <div className={`w-2 h-2 rounded-full ${['url-input', 'image-input', 'ai-input'].includes(wizardState.step) ? 'bg-orange-500' : 'bg-gray-300'}`} />
               <div className={`w-2 h-2 rounded-full ${wizardState.step === 'processing' ? 'bg-orange-500' : 'bg-gray-300'}`} />
               <div className={`w-2 h-2 rounded-full ${wizardState.step === 'recipe-details' ? 'bg-orange-500' : 'bg-gray-300'}`} />
             </div>
@@ -501,7 +547,7 @@ export const AddRecipePage: React.FC = () => {
               Choose how you'd like to add your recipe
             </p>
             
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
               <button
                 onClick={() => handleMethodSelect('url')}
                 className="p-8 border-2 border-gray-200 rounded-xl hover:border-orange-300 hover:bg-orange-50 transition-all group"
@@ -521,6 +567,17 @@ export const AddRecipePage: React.FC = () => {
                 <h3 className="font-semibold text-gray-900 mb-2 text-lg">Scan Recipe Image</h3>
                 <p className="text-gray-600">
                   Upload or take a photo of a recipe
+                </p>
+              </button>
+              
+              <button
+                onClick={() => handleMethodSelect('ai')}
+                className="p-8 border-2 border-gray-200 rounded-xl hover:border-orange-300 hover:bg-orange-50 transition-all group"
+              >
+                <Brain className="w-16 h-16 text-gray-400 group-hover:text-orange-500 mx-auto mb-4" />
+                <h3 className="font-semibold text-gray-900 mb-2 text-lg">Generate with AI</h3>
+                <p className="text-gray-600">
+                  Use AI to generate themed recipes
                 </p>
               </button>
               
@@ -647,12 +704,15 @@ export const AddRecipePage: React.FC = () => {
             <div className="animate-spin rounded-full h-20 w-20 border-b-2 border-orange-600 mx-auto"></div>
             <div>
               <h3 className="text-2xl font-semibold text-gray-900 mb-4">
-                {wizardState.method === 'url' ? 'Importing Recipe...' : 'Processing Image...'}
+                {wizardState.method === 'url' ? 'Importing Recipe...' : 
+                 wizardState.method === 'image' ? 'Processing Image...' : 
+                 wizardState.method === 'ai' ? 'Generating Recipe...' : 'Processing...'}
               </h3>
               <p className="text-gray-600 text-lg">
-                {wizardState.method === 'url' 
-                  ? 'Extracting recipe details from the website...' 
-                  : 'Our AI is reading the recipe from your image. This may take a moment...'
+                {wizardState.method === 'url' ? 'Extracting recipe details from the website...' : 
+                 wizardState.method === 'image' ? 'Our AI is reading the recipe from your image. This may take a moment...' :
+                 wizardState.method === 'ai' ? 'AI is creating a unique recipe for your collection. This may take 15-30 seconds...' :
+                 'Processing your request...'
                 }
               </p>
             </div>
@@ -672,12 +732,27 @@ export const AddRecipePage: React.FC = () => {
         {/* Step 4: Recipe Details Form */}
         {wizardState.step === 'recipe-details' && (
           <form onSubmit={handleSubmit(onSubmit)} className="space-y-8">
-            {/* Success message for extracted recipes */}
+            {/* Success message for extracted/generated recipes */}
             {wizardState.extractedData && (
-              <div className="bg-green-50 border border-green-200 rounded-lg p-4 flex items-center space-x-3">
-                <CheckCircle className="w-5 h-5 text-green-600" />
-                <p className="text-sm text-green-800">
-                  <strong>Recipe extracted successfully!</strong> Review and edit the details below as needed.
+              <div className={`border rounded-lg p-4 flex items-center space-x-3 ${
+                wizardState.method === 'ai' 
+                  ? 'bg-purple-50 border-purple-200' 
+                  : 'bg-green-50 border-green-200'
+              }`}>
+                {wizardState.method === 'ai' ? (
+                  <Sparkles className="w-5 h-5 text-purple-600" />
+                ) : (
+                  <CheckCircle className="w-5 h-5 text-green-600" />
+                )}
+                <p className={`text-sm ${
+                  wizardState.method === 'ai' ? 'text-purple-800' : 'text-green-800'
+                }`}>
+                  <strong>
+                    {wizardState.method === 'ai' 
+                      ? 'Recipe generated successfully!' 
+                      : 'Recipe extracted successfully!'
+                    }
+                  </strong> Review and edit the details below as needed.
                 </p>
               </div>
             )}
@@ -968,11 +1043,13 @@ export const AddRecipePage: React.FC = () => {
               >
                 Cancel
               </Button>
-              <Button 
+              <Button
                 type="submit" 
                 loading={wizardState.isProcessing} 
                 disabled={wizardState.isProcessing}
+                className={wizardState.method === 'ai' ? 'bg-gradient-to-r from-purple-500 to-orange-500 hover:from-purple-600 hover:to-orange-600' : ''}
               >
+                {wizardState.method === 'ai' && <Sparkles className="w-4 h-4 mr-2" />}
                 Add Recipe
               </Button>
             </div>

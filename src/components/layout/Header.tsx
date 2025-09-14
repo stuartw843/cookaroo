@@ -3,11 +3,11 @@ import { useAuth } from '../../contexts/AuthContext'
 import { Button } from '../ui/Button'
 import { Logo } from '../ui/Logo'
 import { SpaceSelector } from '../collaboration/SpaceSelector'
-import { LogOut, User, Calendar, BookOpen, Settings, ChevronDown, Menu, X } from 'lucide-react'
+import { LogOut, User, Calendar, BookOpen, Settings, ChevronDown, Menu, X, Brain } from 'lucide-react'
 
 interface HeaderProps {
-  currentView: 'recipes' | 'mealplanner' | 'settings'
-  onViewChange: (view: 'recipes' | 'mealplanner' | 'settings') => void
+  currentView: 'recipes' | 'mealplanner' | 'settings' | 'ai-collections'
+  onViewChange: (view: 'recipes' | 'mealplanner' | 'settings' | 'ai-collections') => void
   onManageSpace: () => void
 }
 
@@ -54,6 +54,16 @@ export const Header: React.FC<HeaderProps> = ({ currentView, onViewChange, onMan
                   <Calendar className="w-4 h-4" />
                   <span className="text-sm">Meal Planner</span>
                 </Button>
+
+                <Button
+                  variant={currentView === 'ai-collections' ? 'primary' : 'ghost'}
+                  size="sm"
+                  onClick={() => onViewChange('ai-collections')}
+                  className="flex items-center space-x-2 whitespace-nowrap px-4 py-2"
+                >
+                  <Brain className="w-4 h-4" />
+                  <span className="text-sm">AI Collections</span>
+                </Button>
               </div>
 
               {/* Tablet Navigation - Icons with text */}
@@ -76,6 +86,16 @@ export const Header: React.FC<HeaderProps> = ({ currentView, onViewChange, onMan
                 >
                   <Calendar className="w-4 h-4" />
                   <span className="text-xs">Planner</span>
+                </Button>
+
+                <Button
+                  variant={currentView === 'ai-collections' ? 'primary' : 'ghost'}
+                  size="sm"
+                  onClick={() => onViewChange('ai-collections')}
+                  className="flex items-center space-x-1 px-3 py-2"
+                >
+                  <Brain className="w-4 h-4" />
+                  <span className="text-xs">AI</span>
                 </Button>
               </div>
             </div>
@@ -197,6 +217,19 @@ export const Header: React.FC<HeaderProps> = ({ currentView, onViewChange, onMan
                 >
                   <Calendar className="w-5 h-5" />
                   <span>Meal Planner</span>
+                </Button>
+
+                <Button
+                  variant={currentView === 'ai-collections' ? 'primary' : 'ghost'}
+                  size="sm"
+                  onClick={() => {
+                    onViewChange('ai-collections')
+                    setMobileMenuOpen(false)
+                  }}
+                  className="w-full justify-start space-x-3 min-h-[48px] text-left"
+                >
+                  <Brain className="w-5 h-5" />
+                  <span>AI Collections</span>
                 </Button>
               </div>
             </div>
