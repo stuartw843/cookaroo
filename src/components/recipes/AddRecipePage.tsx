@@ -698,6 +698,65 @@ export const AddRecipePage: React.FC = () => {
           </div>
         )}
 
+        {/* Step 2c: AI Input */}
+        {wizardState.step === 'ai-input' && (
+          <div className="max-w-2xl mx-auto space-y-6">
+            <div className="bg-purple-50 border border-purple-200 rounded-lg p-4">
+              <p className="text-sm text-purple-800">
+                <strong>AI Recipe Generation:</strong> Select an AI collection and optionally provide a specific prompt. 
+                The AI will create a unique recipe that fits your collection's theme.
+              </p>
+            </div>
+            
+            <div>
+              <h3 className="text-lg font-semibold text-gray-900 mb-4">Select AI Collection</h3>
+              <AIRecipeCollections
+                mode="selection"
+                selectedCollectionId={wizardState.selectedCollectionId}
+                onSelectCollection={(collectionId) => 
+                  setWizardState(prev => ({ ...prev, selectedCollectionId: collectionId }))
+                }
+              />
+            </div>
+
+            {wizardState.selectedCollectionId && (
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Specific Request (Optional)
+                </label>
+                <textarea
+                  className="w-full h-24 p-3 border border-gray-300 rounded-lg focus:ring-orange-500 focus:border-orange-500"
+                  placeholder="e.g., 'A quick beef stir-fry under 20 minutes' or 'Vegetarian noodle soup for winter'"
+                  value={wizardState.aiPrompt}
+                  onChange={(e) => setWizardState(prev => ({ ...prev, aiPrompt: e.target.value }))}
+                />
+                <p className="text-xs text-gray-500 mt-1">
+                  Leave blank for a surprise recipe that fits your collection theme
+                </p>
+              </div>
+            )}
+            
+            <div className="flex justify-end space-x-3">
+              <Button 
+                variant="outline" 
+                onClick={goBack}
+                disabled={wizardState.isProcessing}
+              >
+                Back
+              </Button>
+              <Button 
+                onClick={handleAIGenerate} 
+                loading={wizardState.isProcessing}
+                disabled={!wizardState.selectedCollectionId || wizardState.isProcessing}
+                className="bg-gradient-to-r from-purple-500 to-orange-500 hover:from-purple-600 hover:to-orange-600"
+              >
+                <Sparkles className="w-4 h-4 mr-2" />
+                Generate Recipe
+              </Button>
+            </div>
+          </div>
+        )}
+
         {/* Step 3: Processing */}
         {wizardState.step === 'processing' && (
           <div className="max-w-2xl mx-auto space-y-8 text-center py-16">
