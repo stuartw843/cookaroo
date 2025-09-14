@@ -31,6 +31,14 @@ export const useMealPlans = () => {
       return
     }
 
+    if (!user || !currentSpace) {
+      setMealPlans([])
+      setCurrentMealPlan(null)
+      setLoading(false)
+      setInitialLoad(false)
+      return
+    }
+
     try {
       setLoading(true)
       const { data: mealPlansData, error: mealPlansError } = await supabase
@@ -307,7 +315,7 @@ export const useMealPlans = () => {
 
   useEffect(() => {
     fetchMealPlans()
-  }, [user, currentSpace])
+  }, [user?.id, currentSpace?.id])
 
   return {
     mealPlans,

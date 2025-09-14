@@ -19,6 +19,12 @@ export const useAIRecipeCollections = () => {
       return
     }
 
+    if (!user || !currentSpace) {
+      setCollections([])
+      setLoading(false)
+      return
+    }
+
     try {
       setLoading(true)
       const { data, error: fetchError } = await supabase
@@ -126,7 +132,7 @@ export const useAIRecipeCollections = () => {
 
   useEffect(() => {
     fetchCollections()
-  }, [user, currentSpace])
+  }, [user?.id, currentSpace?.id])
 
   return {
     collections,

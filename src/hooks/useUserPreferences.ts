@@ -25,6 +25,17 @@ export const useUserPreferences = () => {
       return
     }
 
+    if (!user) {
+      setPreferences(null)
+      setLoading(false)
+      return
+    }
+
+    if (!currentSpace) {
+      setLoading(false)
+      return
+    }
+
     try {
       setLoading(true)
       const { data, error: fetchError } = await supabase
@@ -95,7 +106,7 @@ export const useUserPreferences = () => {
 
   useEffect(() => {
     fetchPreferences()
-  }, [user, currentSpace])
+  }, [user?.id, currentSpace?.id])
 
   return {
     preferences,

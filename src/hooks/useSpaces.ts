@@ -38,6 +38,15 @@ export const useSpacesData = () => {
       return
     }
 
+    if (!user) {
+      setSpaces([])
+      setCurrentSpace(null)
+      setCurrentSpaceId(null)
+      setLoading(false)
+      setInitialLoad(false)
+      return
+    }
+
     try {
       setLoading(true)
       
@@ -434,7 +443,7 @@ export const useSpacesData = () => {
 
   useEffect(() => {
     fetchSpaces()
-  }, [user])
+  }, [user?.id])
 
   return {
     spaces,

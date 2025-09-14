@@ -25,6 +25,13 @@ export const useRecipes = () => {
       return
     }
 
+    if (!user || !currentSpace) {
+      setRecipes([])
+      setLoading(false)
+      setInitialLoad(false)
+      return
+    }
+
     try {
       setLoading(true)
       const { data: recipesData, error: recipesError } = await supabase
@@ -268,7 +275,7 @@ export const useRecipes = () => {
   useEffect(() => {
     console.log('useRecipes effect triggered:', { user: !!user, currentSpace: currentSpace?.id })
     fetchRecipes()
-  }, [user, currentSpace])
+  }, [user?.id, currentSpace?.id])
 
   return {
     recipes,
