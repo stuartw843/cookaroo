@@ -3,7 +3,7 @@ import { Card, CardContent, CardHeader } from '../ui/Card'
 import { Button } from '../ui/Button'
 import { Input } from '../ui/Input'
 import { useAIRecipeCollections } from '../../hooks/useAIRecipeCollections'
-import { Brain, Plus, Edit3, Trash2, X, Check, Sparkles, Robot, BookOpen } from 'lucide-react'
+import { Brain, Plus, Edit3, Trash2, X, Check, Sparkles, Notebook as Robot, BookOpen } from 'lucide-react'
 import toast from 'react-hot-toast'
 
 interface AIRecipeCollectionsProps {
