@@ -32,6 +32,7 @@ import { Input } from './components/ui/Input'
 import { Button } from './components/ui/Button'
 import { useRecipes } from './hooks/useRecipes'
 import { useSpacesContext } from './contexts/SpacesContext'
+import { useAIRecipeCollections } from './hooks/useAIRecipeCollections'
 import { Search, Filter, Grid, List, Plus, Settings, LogOut, Brain } from 'lucide-react'
 
 type ViewMode = 'recipes' | 'mealplanner' | 'settings' | 'ai-collections'
@@ -47,11 +48,13 @@ const Dashboard: React.FC = () => {
   const [selectedTags, setSelectedTags] = useState<string[]>([])
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid')
   const [timeFilter, setTimeFilter] = useState<string>('')
+  const [selectedCollections, setSelectedCollections] = useState<string[]>([])
   const [showSpaceManagement, setShowSpaceManagement] = useState(false)
   const [userMenuOpen, setUserMenuOpen] = useState(false)
   
   const { recipes, loading: recipesLoading, error, addRecipe, updateRecipe, deleteRecipe } = useRecipes()
   const { currentSpace, spaces, loading: spacesLoading } = useSpacesContext()
+  const { collections, loading: collectionsLoading } = useAIRecipeCollections()
   const { user, signOut } = useAuth()
   
   // Handle view changes with smooth transitions
@@ -104,6 +107,9 @@ const Dashboard: React.FC = () => {
     const matchesTags = selectedTags.length === 0 || 
                        selectedTags.every(tag => recipe.tags?.includes(tag))
     
+    const matchesCollections = selectedCollections.length === 0 || 
+                              selectedCollections.includes(recipe.ai_collection_id || 'none')
+    
     const matchesTime = (() => {
       if (!timeFilter) return true
       
@@ -118,7 +124,7 @@ const Dashboard: React.FC = () => {
       }
     })()
     
-    return matchesSearch && matchesTags && matchesTime
+    return matchesSearch && matchesTags && matchesCollections && matchesTime
   })
   
   const toggleTag = (tag: string) => {
@@ -126,6 +132,14 @@ const Dashboard: React.FC = () => {
       prev.includes(tag) 
         ? prev.filter(t => t !== tag)
         : [...prev, tag]
+    )
+  }
+  
+  const toggleCollection = (collectionId: string) => {
+    setSelectedCollections(prev => 
+      prev.includes(collectionId) 
+        ? prev.filter(id => id !== collectionId)
+        : [...prev, collectionId]
     )
   }
   
@@ -290,6 +304,45 @@ const Dashboard: React.FC = () => {
                   </div>
                 </div>
               )}
+              
+              {/* Collection Filters */}
+              {collections.length > 0 && (
+                <div>
+                  <div className="flex items-center space-x-2 mb-3">
+                    <Brain className="w-4 h-4 text-gray-500" />
+                    <span className="text-sm font-medium text-gray-700">Filter by AI collection:</span>
+                  </div>
+                  <div className="flex flex-wrap gap-2">
+                    {/* None/Manual recipes filter */}
+                    <button
+                      onClick={() => toggleCollection('none')}
+                      className={`px-3 py-2 rounded-full text-sm transition-colors min-h-[36px] ${
+                        selectedCollections.includes('none')
+                          ? 'bg-gray-600 text-white'
+                          : 'bg-gray-100 text-gray-700 hover:bg-gray-200 active:bg-gray-300'
+                      }`}
+                    >
+                      Manual Recipes
+                    </button>
+                    
+                    {/* AI collection filters */}
+                    {collections.map(collection => (
+                      <button
+                        key={collection.id}
+                        onClick={() => toggleCollection(collection.id)}
+                        className={`px-3 py-2 rounded-full text-sm transition-colors min-h-[36px] flex items-center space-x-1 ${
+                          selectedCollections.includes(collection.id)
+                            ? 'bg-gradient-to-r from-purple-500 to-orange-500 text-white'
+                            : 'bg-purple-100 text-purple-700 hover:bg-purple-200 active:bg-purple-300'
+                        }`}
+                      >
+                        <Brain className="w-3 h-3" />
+                        <span>{collection.name}</span>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
             </div>
             
             {/* Recipe Count and Active Filters */}
@@ -298,7 +351,7 @@ const Dashboard: React.FC = () => {
                 <h2 className="text-2xl font-bold text-gray-900">
                   Recipes ({filteredRecipes.length})
                 </h2>
-                {(searchQuery || selectedTags.length > 0 || timeFilter) && (
+                {(searchQuery || selectedTags.length > 0 || timeFilter || selectedCollections.length > 0) && (
                   <div className="flex items-center space-x-2 mt-2">
                     <span className="text-sm text-gray-500">Active filters:</span>
                     {searchQuery && (
@@ -316,11 +369,28 @@ const Dashboard: React.FC = () => {
                         {tag}
                       </span>
                     ))}
+                    {selectedCollections.map(collectionId => {
+                      if (collectionId === 'none') {
+                        return (
+                          <span key="none" className="inline-flex items-center px-2 py-1 rounded-full text-xs bg-gray-100 text-gray-800">
+                            Manual Recipes
+                          </span>
+                        )
+                      }
+                      const collection = collections.find(c => c.id === collectionId)
+                      return collection ? (
+                        <span key={collectionId} className="inline-flex items-center px-2 py-1 rounded-full text-xs bg-purple-100 text-purple-800">
+                          <Brain className="w-3 h-3 mr-1" />
+                          {collection.name}
+                        </span>
+                      ) : null
+                    })}
                     <button
                       onClick={() => {
                         setSearchQuery('')
                         setSelectedTags([])
                         setTimeFilter('')
+                        setSelectedCollections([])
                       }}
                       className="text-xs text-gray-500 hover:text-gray-700 underline"
                     >
