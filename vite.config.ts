@@ -7,9 +7,6 @@ export default defineConfig({
   build: {
     outDir: 'dist',
   },
-  define: {
-    global: 'globalThis',
-  },
   optimizeDeps: {
     exclude: ['lucide-react'],
   },
