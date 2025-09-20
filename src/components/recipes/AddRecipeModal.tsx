@@ -1,27 +1,16 @@
-import React, { useState, useEffect, useRef } from 'react'
+import React, { useState, useEffect } from 'react'
 import { createPortal } from 'react-dom'
 import { useForm, useFieldArray } from 'react-hook-form'
 import { Button } from '../ui/Button'
 import { Input } from '../ui/Input'
-import { X, Plus, Link, Type, Clock, Users, Upload, Camera, Image as ImageIcon, Trash2, ArrowLeft, ArrowRight, CheckCircle } from 'lucide-react'
-import { Brain, Sparkles, Wand2 } from 'lucide-react'
+import { X, Plus, Link, Type, Upload, Image as ImageIcon, Trash2 } from 'lucide-react'
 import { parseRecipeFromText, parseIngredientLine, scrapeRecipeFromUrl } from '../../utils/recipeParser'
-import { useSpacesContext } from '../../contexts/SpacesContext'
-import { useAIRecipeCollections } from '../../hooks/useAIRecipeCollections'
-import { AIRecipeCollections } from '../ai/AIRecipeCollections'
 import toast from 'react-hot-toast'
-
-interface AddRecipeModalProps {
-  isOpen: boolean
-  onClose: () => void
-  onAdd: (recipe: any) => Promise<void>
-  recipe?: any // Optional recipe for editing
-  onUpdate?: (recipeId: string, recipe: any) => Promise<void>
-}
 
 interface RecipeFormData {
   title: string
   description: string
+  notes: string
   image_url: string
   source_url: string
   prep_time: number
@@ -32,53 +21,33 @@ interface RecipeFormData {
   instructions: { instruction: string }[]
 }
 
-type WizardStep = 'method' | 'url-input' | 'image-input' | 'ai-input' | 'processing' | 'recipe-details' | 'review'
-type InputMethod = 'url' | 'image' | 'manual' | 'ai'
-
-interface WizardState {
-  step: WizardStep
-  method: InputMethod | null
-  urlInput: string
-  imageFile: File | null
-  imagePreview: string
-  extractedData: any
-  isProcessing: boolean
-  selectedCollectionId: string | null
-  aiPrompt: string
+interface AddRecipeModalProps {
+  isOpen: boolean
+  onClose: () => void
+  onAdd: (recipe: any) => Promise<any>
+  recipe?: any // For editing
+  onUpdate?: (recipeId: string, recipe: any) => Promise<void>
 }
 
 export const AddRecipeModal: React.FC<AddRecipeModalProps> = ({ 
   isOpen, 
   onClose, 
   onAdd, 
-  recipe, 
-  onUpdate 
+  recipe,
+  onUpdate
 }) => {
-  const [wizardState, setWizardState] = useState<WizardState>({
-    step: 'method',
-    method: null,
-    urlInput: '',
-    imageFile: null,
-    imagePreview: '',
-    extractedData: null,
-    isProcessing: false,
-    selectedCollectionId: null,
-    aiPrompt: ''
-  })
-
+  const [mode, setMode] = useState<'url' | 'manual'>('url')
+  const [urlInput, setUrlInput] = useState('')
+  const [textInput, setTextInput] = useState('')
   const [tags, setTags] = useState<string[]>([])
   const [tagInput, setTagInput] = useState('')
-  const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false)
-  const [showConfirmClose, setShowConfirmClose] = useState(false)
-  const [initialFormData, setInitialFormData] = useState<any>(null)
-  const cameraInputRef = useRef<HTMLInputElement>(null)
-  const modalContentRef = useRef<HTMLDivElement>(null)
+  const [loading, setLoading] = useState(false)
+  const [imageFile, setImageFile] = useState<File | null>(null)
+  const [imagePreview, setImagePreview] = useState('')
   
-  const { currentSpace } = useSpacesContext()
-  const { generateRecipe } = useAIRecipeCollections()
-  const isEditing = !!recipe
+  const isEditing = Boolean(recipe)
   
-  const { register, handleSubmit, control, reset, setValue, watch, formState: { errors, isDirty } } = useForm<RecipeFormData>({
+  const { register, handleSubmit, control, reset, setValue, watch, formState: { errors } } = useForm<RecipeFormData>({
     defaultValues: {
       servings: 4,
       ingredients: [{ name: '', amount: '', unit: '' }],
@@ -96,80 +65,93 @@ export const AddRecipeModal: React.FC<AddRecipeModalProps> = ({
     name: 'instructions'
   })
 
-  // Initialize wizard for editing
+  // Reset form when modal opens/closes or recipe changes
   useEffect(() => {
-    if (isEditing && recipe && isOpen) {
-      // Skip wizard for editing, go straight to recipe details
-      setWizardState(prev => ({ ...prev, step: 'recipe-details', method: 'manual' }))
-      populateFormWithRecipe(recipe)
-      // Store initial form data for comparison
-      setInitialFormData({
-        ...recipe,
-        tags: recipe.tags || []
-      })
-    } else if (isOpen && !isEditing) {
-      // Reset wizard for new recipe
-      setWizardState({
-        step: 'method',
-        method: null,
-        urlInput: '',
-        imageFile: null,
-        imagePreview: '',
-        extractedData: null,
-        isProcessing: false,
-        selectedCollectionId: null,
-        aiPrompt: ''
-      })
-      setInitialFormData(null)
+    if (isOpen) {
+      if (isEditing && recipe) {
+        // Populate form with existing recipe data
+        setValue('title', recipe.title)
+        setValue('description', recipe.description || '')
+        setValue('notes', recipe.notes || '')
+        setValue('image_url', recipe.image_url || '')
+        setValue('source_url', recipe.source_url || '')
+        setValue('prep_time', recipe.prep_time || 0)
+        setValue('cook_time', recipe.cook_time || 0)
+        setValue('servings', recipe.servings)
+        setTags(recipe.tags || [])
+        setImagePreview(recipe.image_url || '')
+        
+        // Clear and populate ingredients
+        for (let i = ingredientFields.length - 1; i >= 0; i--) {
+          removeIngredient(i)
+        }
+        
+        const ingredientsToAdd = recipe.ingredients && recipe.ingredients.length > 0 
+          ? recipe.ingredients 
+          : [{ name: '', amount: '', unit: '' }]
+        
+        ingredientsToAdd.forEach((ingredient: any) => {
+          appendIngredient({
+            name: ingredient.name || '',
+            amount: ingredient.amount?.toString() || '',
+            unit: ingredient.unit || ''
+          })
+        })
+        
+        // Clear and populate instructions
+        for (let i = instructionFields.length - 1; i >= 0; i--) {
+          removeInstruction(i)
+        }
+        
+        const instructionsToAdd = recipe.instructions && recipe.instructions.length > 0 
+          ? recipe.instructions 
+          : [{ instruction: '' }]
+        
+        instructionsToAdd.forEach((instruction: any) => {
+          appendInstruction({ instruction: instruction.instruction || '' })
+        })
+      } else {
+        // Reset form for new recipe
+        reset()
+        setTags([])
+        setTagInput('')
+        setUrlInput('')
+        setTextInput('')
+        setImageFile(null)
+        setImagePreview('')
+      }
     }
-  }, [isEditing, recipe, isOpen])
-
-  // Reset everything when modal closes
-  useEffect(() => {
-    if (!isOpen) {
-      setWizardState({
-        step: 'method',
-        method: null,
-        urlInput: '',
-        imageFile: null,
-        imagePreview: '',
-        extractedData: null,
-        isProcessing: false,
-        selectedCollectionId: null,
-        aiPrompt: ''
-      })
-      setTags([])
-      setTagInput('')
-      setHasUnsavedChanges(false)
-      setShowConfirmClose(false)
-      setInitialFormData(null)
-      reset()
-    }
-  }, [isOpen, reset])
+  }, [isOpen, isEditing, recipe, reset, setValue])
 
   // Handle escape key
   useEffect(() => {
     const handleEscape = (e: KeyboardEvent) => {
-      if (e.key === 'Escape' && isOpen && !wizardState.isProcessing) {
-        handleCloseAttempt()
+      if (e.key === 'Escape' && isOpen) {
+        onClose()
       }
     }
 
     if (isOpen) {
+      document.addEventListener('keydown', handleEscape)
+      return () => document.removeEventListener('keydown', handleEscape)
+    }
+  }, [isOpen, onClose])
+
+  // Prevent body scroll when modal is open
+  useEffect(() => {
+    if (isOpen) {
       const originalOverflow = document.body.style.overflow
       document.body.style.overflow = 'hidden'
-      
-      document.addEventListener('keydown', handleEscape)
       return () => {
-        document.removeEventListener('keydown', handleEscape)
         document.body.style.overflow = originalOverflow
       }
     }
-  }, [isOpen, wizardState.isProcessing])
+  }, [isOpen])
 
   const populateFormWithRecipe = (recipeData: any) => {
     setValue('title', recipeData.title || '')
     setValue('description', recipeData.description || '')
+    setValue('notes', recipeData.notes || '')
     setValue('image_url', recipeData.image_url || '')
     setValue('source_url', recipeData.source_url || '')
     setValue('prep_time', recipeData.prep_time || 0)
@@ -178,7 +160,7 @@ export const AddRecipeModal: React.FC<AddRecipeModalProps> = ({
     setTags(recipeData.tags || [])
     
     if (recipeData.image_url) {
-      setWizardState(prev => ({ ...prev, imagePreview: recipeData.image_url }))
+      setImagePreview(recipeData.image_url)
     }
     
     // Clear and populate ingredients
@@ -212,272 +194,54 @@ export const AddRecipeModal: React.FC<AddRecipeModalProps> = ({
     })
   }
 
-  // Check if form has unsaved changes
-  const checkForUnsavedChanges = () => {
-    if (!isEditing || !initialFormData) return false
-
-    const currentFormData = watch()
-    
-    // Check basic form fields
-    const fieldsChanged = 
-      currentFormData.title !== (initialFormData.title || '') ||
-      currentFormData.description !== (initialFormData.description || '') ||
-      currentFormData.image_url !== (initialFormData.image_url || '') ||
-      currentFormData.source_url !== (initialFormData.source_url || '') ||
-      currentFormData.prep_time !== (initialFormData.prep_time || 0) ||
-      currentFormData.cook_time !== (initialFormData.cook_time || 0) ||
-      currentFormData.servings !== (initialFormData.servings || 4)
-
-    // Check tags
-    const initialTags = initialFormData.tags || []
-    const tagsChanged = tags.length !== initialTags.length || 
-      !tags.every(tag => initialTags.includes(tag))
-
-    // Check ingredients
-    const initialIngredients = initialFormData.ingredients || []
-    const currentIngredients = currentFormData.ingredients || []
-    const ingredientsChanged = currentIngredients.length !== initialIngredients.length ||
-      !currentIngredients.every((ing: any, index: number) => {
-        const initialIng = initialIngredients[index]
-        return initialIng && 
-          ing.name === (initialIng.name || '') &&
-          ing.amount === (initialIng.amount?.toString() || '') &&
-          ing.unit === (initialIng.unit || '')
-      })
-
-    // Check instructions
-    const initialInstructions = initialFormData.instructions || []
-    const currentInstructions = currentFormData.instructions || []
-    const instructionsChanged = currentInstructions.length !== initialInstructions.length ||
-      !currentInstructions.every((inst: any, index: number) => {
-        const initialInst = initialInstructions[index]
-        return initialInst && inst.instruction === (initialInst.instruction || '')
-      })
-
-    // Check image changes
-    const imageChanged = wizardState.imageFile !== null ||
-      wizardState.imagePreview !== (initialFormData.image_url || '')
-
-    return fieldsChanged || tagsChanged || ingredientsChanged || instructionsChanged || imageChanged
-  }
-
-  // Update unsaved changes status
-  useEffect(() => {
-    if (isEditing && wizardState.step === 'recipe-details') {
-      const hasChanges = checkForUnsavedChanges()
-      setHasUnsavedChanges(hasChanges)
-    }
-  }, [watch(), tags, wizardState.imageFile, wizardState.imagePreview, isEditing, wizardState.step])
-
-  const handleCloseAttempt = () => {
-    if (hasUnsavedChanges && isEditing) {
-      setShowConfirmClose(true)
-    } else {
-      onClose()
-    }
-  }
-
-  const handleConfirmClose = () => {
-    setShowConfirmClose(false)
-    onClose()
-  }
-
-  const handleCancelClose = () => {
-    setShowConfirmClose(false)
-  }
-
-  const handleMethodSelect = (method: InputMethod) => {
-    setWizardState(prev => ({ 
-      ...prev, 
-      method, 
-      step: method === 'manual' ? 'recipe-details' : 
-            method === 'url' ? 'url-input' : 
-            method === 'image' ? 'image-input' : 
-            method === 'ai' ? 'ai-input' : 'recipe-details'
-    }))
-    
-    // Scroll to top when entering recipe-details for manual entry
-    if (method === 'manual') {
-      setTimeout(() => {
-        modalContentRef.current?.scrollTo({ top: 0, behavior: 'smooth' })
-      }, 100)
-    }
-  }
-
   const handleUrlImport = async () => {
-    if (!wizardState.urlInput.trim()) return
+    if (!urlInput.trim()) return
     
-    setWizardState(prev => ({ ...prev, isProcessing: true, step: 'processing' }))
-    
+    setLoading(true)
     try {
-      const extractedRecipe = await scrapeRecipeFromUrl(wizardState.urlInput.trim())
-      
-      setWizardState(prev => ({ 
-        ...prev, 
-        extractedData: extractedRecipe,
-        isProcessing: false,
-        step: 'recipe-details'
-      }))
-      
-      // Populate form with extracted data
-      populateFormWithRecipe({
-        ...extractedRecipe,
-        source_url: wizardState.urlInput,
-        image_url: extractedRecipe.image || ''
-      })
-      
-      if (extractedRecipe.image) {
-        setWizardState(prev => ({ ...prev, imagePreview: extractedRecipe.image }))
-      }
-      
-      // Scroll to top when transitioning to recipe details
-      setTimeout(() => {
-        modalContentRef.current?.scrollTo({ top: 0, behavior: 'smooth' })
-      }, 100)
-      
+      const extractedRecipe = await scrapeRecipeFromUrl(urlInput.trim())
+      populateFormWithRecipe(extractedRecipe)
+      setMode('manual')
       toast.success('Recipe imported successfully! Review and edit as needed.')
     } catch (error) {
-      console.error('Recipe import error:', error)
       toast.error(error instanceof Error ? error.message : 'Failed to import recipe')
-      setWizardState(prev => ({ ...prev, isProcessing: false, step: 'url-input' }))
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const handleTextImport = () => {
+    if (!textInput.trim()) return
+    
+    try {
+      const parsedRecipe = parseRecipeFromText(textInput)
+      populateFormWithRecipe(parsedRecipe)
+      setMode('manual')
+      toast.success('Recipe parsed successfully! Review and edit as needed.')
+    } catch (error) {
+      toast.error('Failed to parse recipe text')
     }
   }
 
   const handleImageUpload = (file: File) => {
-    if (file.size > 10 * 1024 * 1024) {
-      toast.error('Image size must be less than 10MB')
+    if (file.size > 5 * 1024 * 1024) {
+      toast.error('Image size must be less than 5MB')
       return
     }
 
-    setWizardState(prev => ({ 
-      ...prev, 
-      imageFile: file,
-      isProcessing: true,
-      step: 'processing'
-    }))
-
-    // Create preview
+    setImageFile(file)
     const reader = new FileReader()
     reader.onload = (e) => {
-      const preview = e.target?.result as string
-      setWizardState(prev => ({ ...prev, imagePreview: preview }))
+      const result = e.target?.result as string
+      setImagePreview(result)
+      setValue('image_url', '')
     }
     reader.readAsDataURL(file)
-
-    // Process OCR
-    processImageOCR(file)
-  }
-
-  const handleAIGenerate = async () => {
-    if (!wizardState.selectedCollectionId) {
-      toast.error('Please select an AI collection')
-      return
-    }
-
-    setWizardState(prev => ({ ...prev, isProcessing: true, step: 'processing' }))
-    
-    try {
-      const generatedRecipe = await generateRecipe(
-        wizardState.selectedCollectionId,
-        wizardState.aiPrompt.trim() || undefined
-      )
-      
-      setWizardState(prev => ({ 
-        ...prev, 
-        extractedData: generatedRecipe,
-        isProcessing: false,
-        step: 'recipe-details'
-      }))
-      
-      // Populate form with generated data
-      populateFormWithRecipe(generatedRecipe)
-      
-      // Scroll to top when transitioning to recipe details
-      setTimeout(() => {
-        modalContentRef.current?.scrollTo({ top: 0, behavior: 'smooth' })
-      }, 100)
-      
-      toast.success('Recipe generated successfully! Review and edit as needed.')
-    } catch (error) {
-      console.error('AI generation error:', error)
-      toast.error(error instanceof Error ? error.message : 'Failed to generate recipe')
-      setWizardState(prev => ({ ...prev, isProcessing: false, step: 'ai-input' }))
-    }
-  }
-
-  const processImageOCR = async (file: File) => {
-    try {
-      const formData = new FormData()
-      formData.append('image', file)
-
-      const apiUrl = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/ocr-recipe`
-      
-      const response = await fetch(apiUrl, {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY}`,
-        },
-        body: formData
-      })
-
-      if (!response.ok) {
-        let errorMessage = 'Failed to process recipe image'
-        try {
-          const errorData = await response.json()
-          errorMessage = errorData.error || errorMessage
-        } catch {
-          errorMessage = `Server error: ${response.status}`
-        }
-        throw new Error(errorMessage)
-      }
-      
-      const extractedRecipe = await response.json()
-      
-      setWizardState(prev => ({ 
-        ...prev, 
-        extractedData: extractedRecipe,
-        isProcessing: false,
-        step: 'recipe-details'
-      }))
-      
-      // Populate form with extracted data
-      populateFormWithRecipe(extractedRecipe)
-      
-      // Scroll to top when transitioning to recipe details
-      setTimeout(() => {
-        modalContentRef.current?.scrollTo({ top: 0, behavior: 'smooth' })
-      }, 100)
-      
-      toast.success('Recipe extracted from image! Review and edit as needed.')
-    } catch (error) {
-      console.error('OCR error:', error)
-      toast.error(error instanceof Error ? error.message : 'Failed to process recipe image')
-      setWizardState(prev => ({ ...prev, isProcessing: false, step: 'image-input' }))
-    }
-  }
-
-  const handleCameraCapture = () => {
-    cameraInputRef.current?.click()
-  }
-
-  const handleCameraInputChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0]
-    if (file) {
-      handleImageUpload(file)
-    }
-    // Clear input to allow same file selection
-    event.target.value = ''
-  }
-
-  const handleFileInputChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0]
-    if (file) {
-      handleImageUpload(file)
-    }
   }
 
   const removeImage = () => {
-    setWizardState(prev => ({ ...prev, imageFile: null, imagePreview: '' }))
+    setImageFile(null)
+    setImagePreview('')
     setValue('image_url', '')
   }
 
@@ -500,52 +264,25 @@ export const AddRecipeModal: React.FC<AddRecipeModalProps> = ({
     }
   }
 
-  const goBack = () => {
-    switch (wizardState.step) {
-      case 'url-input':
-      case 'image-input':
-      case 'ai-input':
-        setWizardState(prev => ({ ...prev, step: 'method' }))
-        break
-      case 'recipe-details':
-        if (wizardState.method === 'manual') {
-          setWizardState(prev => ({ ...prev, step: 'method' }))
-        } else {
-          setWizardState(prev => ({ 
-            ...prev, 
-            step: wizardState.method === 'url' ? 'url-input' : 
-                  wizardState.method === 'image' ? 'image-input' : 
-                  wizardState.method === 'ai' ? 'ai-input' : 'method'
-          }))
-        }
-        break
-    }
-  }
-
   const onSubmit = async (data: RecipeFormData) => {
-    if (!isEditing && !currentSpace) {
-      toast.error('No space selected. Please select or create a space first.')
-      return
-    }
-    
-    setWizardState(prev => ({ ...prev, isProcessing: true }))
+    setLoading(true)
     
     try {
       let finalImageUrl = data.image_url
       
       // Handle image upload if there's a file
-      if (wizardState.imageFile) {
+      if (imageFile) {
         try {
           const reader = new FileReader()
           finalImageUrl = await new Promise((resolve, reject) => {
             reader.onload = () => resolve(reader.result as string)
             reader.onerror = () => reject(new Error('Failed to read image file'))
-            reader.readAsDataURL(wizardState.imageFile!)
+            reader.readAsDataURL(imageFile)
           })
         } catch (error) {
           console.error('Image processing error:', error)
           toast.error('Failed to process image')
-          setWizardState(prev => ({ ...prev, isProcessing: false }))
+          setLoading(false)
           return
         }
       }
@@ -553,20 +290,18 @@ export const AddRecipeModal: React.FC<AddRecipeModalProps> = ({
       const recipeData = {
         title: data.title,
         description: data.description || undefined,
+        notes: data.notes || undefined,
         image_url: finalImageUrl || undefined,
         source_url: data.source_url || undefined,
         prep_time: data.prep_time || undefined,
         cook_time: data.cook_time || undefined,
         servings: data.servings,
         tags: tags,
-        ai_collection_id: wizardState.selectedCollectionId || undefined,
-        generation_prompt: wizardState.aiPrompt.trim() || undefined,
-        is_ai_generated: wizardState.method === 'ai',
         ingredients: data.ingredients
           .filter(ing => ing.name.trim())
           .map(ing => ({
             name: ing.name.trim(),
-            amount: ing.amount && ing.amount.trim() ? parseFloat(ing.amount) : null,
+            amount: ing.amount && ing.amount.trim() ? parseFloat(ing.amount) : undefined,
             unit: ing.unit.trim() || undefined
           })),
         instructions: data.instructions
@@ -584,696 +319,461 @@ export const AddRecipeModal: React.FC<AddRecipeModalProps> = ({
       
       onClose()
     } catch (error) {
-      toast.error('Failed to save recipe')
-      setWizardState(prev => ({ ...prev, isProcessing: false }))
+      toast.error(isEditing ? 'Failed to update recipe' : 'Failed to save recipe')
+    } finally {
+      setLoading(false)
     }
   }
 
+  // Handle outside click
   const handleBackdropClick = (e: React.MouseEvent) => {
-    if (e.target === e.currentTarget && !wizardState.isProcessing) {
-      handleCloseAttempt()
+    if (e.target === e.currentTarget) {
+      onClose()
     }
-  }
-
-  const getStepTitle = () => {
-    switch (wizardState.step) {
-      case 'method': return isEditing ? 'Edit Recipe' : 'How would you like to add your recipe?'
-      case 'url-input': return 'Import from URL'
-      case 'image-input': return 'Upload Recipe Image'
-      case 'ai-input': return 'Generate with AI'
-      case 'processing': return 'Processing...'
-      case 'recipe-details': return 'Recipe Details'
-      case 'review': return 'Review Recipe'
-      default: return 'Add Recipe'
-    }
-  }
-
-  const canGoBack = () => {
-    return !wizardState.isProcessing && wizardState.step !== 'method' && wizardState.step !== 'processing'
   }
 
   if (!isOpen) return null
-  
+
   const modalContent = (
     <div 
-      className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-[9997]"
+      className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-[9999]"
       onClick={handleBackdropClick}
     >
       <div className="bg-white rounded-xl max-w-4xl w-full max-h-[90vh] overflow-hidden relative">
-        {/* Header */}
         <div className="flex items-center justify-between p-6 border-b border-gray-200">
-          <div className="flex items-center space-x-4">
-            {canGoBack() && (
-              <button
-                onClick={goBack}
-                className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
-              >
-                <ArrowLeft className="w-5 h-5" />
-              </button>
-            )}
-            <h2 className="text-xl font-semibold text-gray-900">
-              {getStepTitle()}
-            </h2>
-          </div>
-          
-          {/* Hidden camera input */}
-          <input
-            ref={cameraInputRef}
-            type="file"
-            accept="image/*"
-            capture="environment"
-            onChange={handleCameraInputChange}
-            className="absolute w-px h-px opacity-0 overflow-hidden -m-px"
-            tabIndex={-1}
-            aria-hidden="true"
-          />
-          
+          <h2 className="text-xl font-semibold text-gray-900">
+            {isEditing ? 'Edit Recipe' : 'Add New Recipe'}
+          </h2>
           <button
-            onClick={handleCloseAttempt}
-            disabled={wizardState.isProcessing}
-            className="p-2 hover:bg-gray-100 rounded-lg transition-colors disabled:opacity-50"
+            onClick={onClose}
+            className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
           >
             <X className="w-5 h-5" />
           </button>
         </div>
         
-        {/* Content */}
-        <div ref={modalContentRef} className="overflow-y-auto max-h-[calc(90vh-80px)]">
-          <div className="p-6">
-            {/* Step 1: Method Selection */}
-            {wizardState.step === 'method' && !isEditing && (
-              <div className="space-y-6">
-                <p className="text-gray-600 text-center mb-8">
-                  Choose how you'd like to add your recipe
-                </p>
-                
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-                  <button
-                    onClick={() => handleMethodSelect('url')}
-                    className="p-6 border-2 border-gray-200 rounded-xl hover:border-orange-300 hover:bg-orange-50 transition-all group"
-                  >
-                    <Link className="w-12 h-12 text-gray-400 group-hover:text-orange-500 mx-auto mb-4" />
-                    <h3 className="font-semibold text-gray-900 mb-2">Import from URL</h3>
-                    <p className="text-sm text-gray-600">
-                      Paste a link from your favorite recipe website
-                    </p>
-                  </button>
-                  
-                  <button
-                    onClick={() => handleMethodSelect('image')}
-                    className="p-6 border-2 border-gray-200 rounded-xl hover:border-orange-300 hover:bg-orange-50 transition-all group"
-                  >
-                    <Camera className="w-12 h-12 text-gray-400 group-hover:text-orange-500 mx-auto mb-4" />
-                    <h3 className="font-semibold text-gray-900 mb-2">Scan Recipe Image</h3>
-                    <p className="text-sm text-gray-600">
-                      Upload or take a photo of a recipe
-                    </p>
-                  </button>
-                  
-                  <button
-                    onClick={() => handleMethodSelect('ai')}
-                    className="p-6 border-2 border-gray-200 rounded-xl hover:border-orange-300 hover:bg-orange-50 transition-all group"
-                  >
-                    <Brain className="w-12 h-12 text-gray-400 group-hover:text-orange-500 mx-auto mb-4" />
-                    <h3 className="font-semibold text-gray-900 mb-2">Generate with AI</h3>
-                    <p className="text-sm text-gray-600">
-                      Use AI to generate themed recipes
-                    </p>
-                  </button>
-                  
-                  <button
-                    onClick={() => handleMethodSelect('manual')}
-                    className="p-6 border-2 border-gray-200 rounded-xl hover:border-orange-300 hover:bg-orange-50 transition-all group"
-                  >
-                    <Type className="w-12 h-12 text-gray-400 group-hover:text-orange-500 mx-auto mb-4" />
-                    <h3 className="font-semibold text-gray-900 mb-2">Manual Entry</h3>
-                    <p className="text-sm text-gray-600">
-                      Type in your recipe details manually
-                    </p>
-                  </button>
-                </div>
+        <div className="overflow-y-auto max-h-[calc(90vh-160px)] p-6">
+          {!isEditing && mode === 'url' && (
+            <div className="space-y-6 mb-8">
+              <div className="text-center">
+                <h3 className="text-lg font-medium text-gray-900 mb-2">Import from URL</h3>
+                <p className="text-gray-600">Paste a recipe URL to automatically import it</p>
               </div>
-            )}
-
-            {/* Step 2a: URL Input */}
-            {wizardState.step === 'url-input' && (
-              <div className="space-y-6">
-                <div className="bg-green-50 border border-green-200 rounded-lg p-4">
-                  <p className="text-sm text-green-800">
-                    <strong>Recipe Import:</strong> Enter a URL from popular recipe sites like AllRecipes, Food Network, BBC Good Food, etc. 
-                    The system will automatically extract recipe details.
-                  </p>
-                </div>
-                
+              
+              <div className="space-y-4">
                 <Input
                   label="Recipe URL"
                   placeholder="https://www.allrecipes.com/recipe/..."
-                  value={wizardState.urlInput}
-                  onChange={(e) => setWizardState(prev => ({ ...prev, urlInput: e.target.value }))}
-                  disabled={wizardState.isProcessing}
+                  value={urlInput}
+                  onChange={(e) => setUrlInput(e.target.value)}
+                  disabled={loading}
                 />
                 
                 <div className="flex justify-end space-x-3">
                   <Button 
                     variant="outline" 
-                    onClick={goBack}
-                    disabled={wizardState.isProcessing}
+                    onClick={() => setMode('manual')}
+                    disabled={loading}
                   >
-                    Back
+                    Enter Manually
                   </Button>
                   <Button 
                     onClick={handleUrlImport} 
-                    loading={wizardState.isProcessing}
-                    disabled={!wizardState.urlInput.trim() || wizardState.isProcessing}
+                    loading={loading}
+                    disabled={!urlInput.trim() || loading}
                   >
                     Import Recipe
                   </Button>
                 </div>
               </div>
-            )}
-
-            {/* Step 2b: Image Input */}
-            {wizardState.step === 'image-input' && (
-              <div className="space-y-6">
-                <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-                  <p className="text-sm text-blue-800">
-                    <strong>Recipe Image Scanner:</strong> Upload a photo of a recipe from a cookbook, 
-                    magazine, or printed recipe. Our AI will extract the ingredients and instructions for you.
-                  </p>
+            </div>
+          )}
+          
+          {!isEditing && mode === 'text' && (
+            <div className="space-y-6 mb-8">
+              <div className="text-center">
+                <h3 className="text-lg font-medium text-gray-900 mb-2">Import from Text</h3>
+                <p className="text-gray-600">Paste recipe text to parse it automatically</p>
+              </div>
+              
+              <div className="space-y-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Recipe Text
+                  </label>
+                  <textarea
+                    className="w-full h-48 p-3 border border-gray-300 rounded-lg focus:ring-orange-500 focus:border-orange-500"
+                    placeholder="Paste your recipe text here..."
+                    value={textInput}
+                    onChange={(e) => setTextInput(e.target.value)}
+                  />
                 </div>
                 
-                <div className="border-2 border-dashed border-gray-300 rounded-lg p-8">
-                  <div className="text-center">
-                    <Camera className="mx-auto h-12 w-12 text-gray-400 mb-4" />
-                    <div className="space-y-4">
-                      <div>
-                        <input
-                          type="file"
-                          accept="image/*"
-                          onChange={handleFileInputChange}
-                          className="hidden"
-                          disabled={wizardState.isProcessing}
-                          id="image-upload"
-                        />
-                        <label htmlFor="image-upload" className="cursor-pointer">
-                          <Button 
-                            type="button" 
-                            size="lg" 
-                            disabled={wizardState.isProcessing}
-                            className="w-full sm:w-auto pointer-events-none"
-                          >
-                            <Upload className="w-5 h-5 mr-2" />
-                            Upload Recipe Image
-                          </Button>
-                        </label>
-                      </div>
-                      
-                      <div className="flex items-center justify-center">
-                        <span className="text-gray-500 text-sm">or</span>
-                      </div>
-                      
-                      <Button
-                        type="button"
-                        variant="outline"
-                        onClick={handleCameraCapture}
-                        disabled={wizardState.isProcessing}
-                      >
-                        <Camera className="w-4 h-4 mr-2" />
-                        Take Photo
-                      </Button>
-                    </div>
-                    
-                    <p className="text-sm text-gray-500 mt-4">
-                      Supports JPG, PNG, and other common image formats (max 10MB)
-                    </p>
-                  </div>
-                </div>
-                
-                <div className="flex justify-end">
-                  <Button variant="outline" onClick={goBack}>
-                    Back
+                <div className="flex justify-end space-x-3">
+                  <Button 
+                    variant="outline" 
+                    onClick={() => setMode('manual')}
+                  >
+                    Enter Manually
+                  </Button>
+                  <Button 
+                    onClick={handleTextImport}
+                    disabled={!textInput.trim()}
+                  >
+                    Parse Recipe
                   </Button>
                 </div>
               </div>
-            )}
+            </div>
+          )}
 
-            {/* Step 2c: AI Input */}
-            {wizardState.step === 'ai-input' && (
-              <div className="space-y-6">
-                <div className="bg-purple-50 border border-purple-200 rounded-lg p-4">
-                  <div className="flex items-start space-x-3">
-                    <Brain className="w-5 h-5 text-purple-600 mt-0.5 flex-shrink-0" />
-                    <div className="text-sm text-purple-800">
-                      <p className="font-medium mb-1">AI Recipe Generation:</p>
-                      <p>Select an AI collection that defines the style and constraints for your recipe. 
-                         You can optionally add a specific prompt for this recipe.</p>
-                    </div>
-                  </div>
-                </div>
-                
-                <AIRecipeCollections
-                  mode="selection"
-                  selectedCollectionId={wizardState.selectedCollectionId}
-                  onSelectCollection={(collectionId) => 
-                    setWizardState(prev => ({ ...prev, selectedCollectionId: collectionId }))
-                  }
+          {(mode === 'manual' || isEditing) && (
+            <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <Input
+                  label="Recipe Title"
+                  {...register('title', { required: 'Title is required' })}
+                  error={errors.title?.message}
                 />
                 
-                {wizardState.selectedCollectionId && (
-                  <Card className="border-orange-200">
-                    <CardHeader>
-                      <div className="flex items-center space-x-2">
-                        <Wand2 className="w-5 h-5 text-orange-600" />
-                        <h3 className="font-semibold text-gray-900">Recipe Generation Prompt</h3>
-                      </div>
-                      <p className="text-gray-600 text-sm">
-                        Optional: Add a specific request for this recipe
-                      </p>
-                    </CardHeader>
-                    <CardContent>
-                      <div className="space-y-4">
-                        <textarea
-                          className="w-full h-24 p-3 border border-gray-300 rounded-lg focus:ring-orange-500 focus:border-orange-500"
-                          placeholder="e.g., 'A spicy beef noodle soup recipe' or 'A vegetarian version of kung pao chicken' (leave blank for surprise recipe)"
-                          value={wizardState.aiPrompt}
-                          onChange={(e) => setWizardState(prev => ({ ...prev, aiPrompt: e.target.value }))}
-                          disabled={wizardState.isProcessing}
-                        />
-                        
-                        <div className="flex justify-end space-x-3">
-                          <Button 
-                            variant="outline" 
-                            onClick={goBack}
-                            disabled={wizardState.isProcessing}
-                          >
-                            Back
-                          </Button>
-                          <Button 
-                            onClick={handleAIGenerate} 
-                            loading={wizardState.isProcessing}
-                            disabled={!wizardState.selectedCollectionId || wizardState.isProcessing}
-                            className="bg-gradient-to-r from-purple-500 to-orange-500 hover:from-purple-600 hover:to-orange-600"
-                          >
-                            <Sparkles className="w-4 h-4 mr-2" />
-                            Generate Recipe
-                          </Button>
-                        </div>
-                      </div>
-                    </CardContent>
-                  </Card>
-                )}
-              </div>
-            )}
-
-            {/* Step 3: Processing */}
-            {wizardState.step === 'processing' && (
-              <div className="space-y-6 text-center py-12">
-                <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-orange-600 mx-auto"></div>
-                <div>
-                  <h3 className="text-lg font-semibold text-gray-900 mb-2">
-                    {wizardState.method === 'url' ? 'Importing Recipe...' : 
-                     wizardState.method === 'image' ? 'Processing Image...' : 
-                     wizardState.method === 'ai' ? 'Generating Recipe...' : 'Processing...'}
-                  </h3>
-                  <p className="text-gray-600">
-                    {wizardState.method === 'url' ? 'Extracting recipe details from the website...' : 
-                     wizardState.method === 'image' ? 'Our AI is reading the recipe from your image. This may take a moment...' :
-                     wizardState.method === 'ai' ? 'AI is creating a unique recipe for your collection. This may take 15-30 seconds...' :
-                     'Processing your request...'
-                    }
-                  </p>
-                </div>
-                
-                {wizardState.imagePreview && (
-                  <div className="max-w-sm mx-auto">
-                    <img
-                      src={wizardState.imagePreview}
-                      alt="Processing"
-                      className="w-full h-48 object-cover rounded-lg border border-gray-300"
-                    />
-                  </div>
-                )}
-              </div>
-            )}
-
-            {/* Step 4: Recipe Details Form */}
-            {wizardState.step === 'recipe-details' && (
-              <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
-                {/* Success message for extracted/generated recipes */}
-                {wizardState.extractedData && !isEditing && (
-                  <div className={`border rounded-lg p-4 flex items-center space-x-3 ${
-                    wizardState.method === 'ai' 
-                      ? 'bg-purple-50 border-purple-200' 
-                      : 'bg-green-50 border-green-200'
-                  }`}>
-                    {wizardState.method === 'ai' ? (
-                      <Sparkles className="w-5 h-5 text-purple-600" />
-                    ) : (
-                      <CheckCircle className="w-5 h-5 text-green-600" />
-                    )}
-                    <p className={`text-sm ${
-                      wizardState.method === 'ai' ? 'text-purple-800' : 'text-green-800'
-                    }`}>
-                      <strong>
-                        {wizardState.method === 'ai' 
-                          ? 'Recipe generated successfully!' 
-                          : 'Recipe extracted successfully!'
-                        }
-                      </strong> Review and edit the details below as needed.
-                    </p>
-                  </div>
-                )}
-
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <Input
-                    label="Recipe Title"
-                    {...register('title', { required: 'Title is required' })}
-                    error={errors.title?.message}
-                  />
+                {/* Image Section */}
+                <div className="space-y-2">
+                  <label className="block text-sm font-medium text-gray-700">
+                    Recipe Image
+                  </label>
                   
-                  {/* Image Section */}
-                  <div className="space-y-2">
-                    <label className="block text-sm font-medium text-gray-700">
-                      Recipe Image
-                    </label>
-                    
-                    {(wizardState.imagePreview || watch('image_url')) ? (
-                      <div className="relative">
-                        <img
-                          src={wizardState.imagePreview || watch('image_url')}
-                          alt="Recipe preview"
-                          className="w-full h-32 object-cover rounded-lg border border-gray-300"
-                        />
-                        <button
-                          type="button"
-                          onClick={removeImage}
-                          className="absolute top-2 right-2 p-1 bg-red-500 text-white rounded-full hover:bg-red-600 transition-colors"
-                        >
-                          <Trash2 className="w-4 h-4" />
-                        </button>
-                      </div>
-                    ) : (
-                      <div className="border-2 border-dashed border-gray-300 rounded-lg p-4">
-                        <div className="text-center">
-                          <ImageIcon className="mx-auto h-8 w-8 text-gray-400 mb-2" />
-                          <div className="flex flex-col sm:flex-row gap-2 justify-center">
-                            <input
-                              type="file"
-                              accept="image/*"
-                              onChange={(e) => {
-                                const file = e.target.files?.[0]
-                                if (file) {
-                                  if (file.size > 5 * 1024 * 1024) {
-                                    toast.error('Image size must be less than 5MB')
-                                    return
-                                  }
-                                  setWizardState(prev => ({ ...prev, imageFile: file }))
-                                  const reader = new FileReader()
-                                  reader.onload = (e) => {
-                                    const result = e.target?.result as string
-                                    setWizardState(prev => ({ ...prev, imagePreview: result }))
-                                    setValue('image_url', '')
-                                  }
-                                  reader.readAsDataURL(file)
-                                }
-                              }}
-                              className="hidden"
-                              id="manual-image-upload"
-                            />
-                            <label htmlFor="manual-image-upload" className="cursor-pointer">
-                              <Button type="button" size="sm" variant="outline" className="w-full sm:w-auto pointer-events-none">
-                                <Upload className="w-4 h-4 mr-1" />
-                                Upload
-                              </Button>
-                            </label>
-                          </div>
-                          <p className="text-xs text-gray-500 mt-2">
-                            Or enter URL below
-                          </p>
+                  {(imagePreview || watch('image_url')) ? (
+                    <div className="relative">
+                      <img
+                        src={imagePreview || watch('image_url')}
+                        alt="Recipe preview"
+                        className="w-full h-40 object-cover rounded-lg border border-gray-300"
+                      />
+                      <button
+                        type="button"
+                        onClick={removeImage}
+                        className="absolute top-2 right-2 p-1 bg-red-500 text-white rounded-full hover:bg-red-600 transition-colors"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </button>
+                    </div>
+                  ) : (
+                    <div className="border-2 border-dashed border-gray-300 rounded-lg p-6">
+                      <div className="text-center">
+                        <ImageIcon className="mx-auto h-10 w-10 text-gray-400 mb-3" />
+                        <div className="flex flex-col sm:flex-row gap-2 justify-center">
+                          <input
+                            type="file"
+                            accept="image/*"
+                            onChange={(e) => {
+                              const file = e.target.files?.[0]
+                              if (file) {
+                                handleImageUpload(file)
+                              }
+                            }}
+                            className="hidden"
+                            id="image-upload"
+                          />
+                          <label htmlFor="image-upload" className="cursor-pointer">
+                            <Button type="button" size="sm" variant="outline" className="w-full sm:w-auto pointer-events-none">
+                              <Upload className="w-4 h-4 mr-1" />
+                              Upload
+                            </Button>
+                          </label>
                         </div>
+                        <p className="text-xs text-gray-500 mt-2">
+                          Or enter URL below
+                        </p>
                       </div>
-                    )}
-                    
-                    <Input
-                      placeholder="https://example.com/image.jpg"
-                      {...register('image_url')}
-                      onChange={(e) => {
-                        const value = e.target.value
-                        setValue('image_url', value)
-                        if (value && value.trim()) {
-                          setWizardState(prev => ({ ...prev, imagePreview: value, imageFile: null }))
-                        } else if (!value.trim() && !wizardState.imageFile) {
-                          setWizardState(prev => ({ ...prev, imagePreview: '' }))
-                        }
-                      }}
-                    />
-                  </div>
+                    </div>
+                  )}
+                  
+                  <Input
+                    placeholder="https://example.com/image.jpg"
+                    {...register('image_url')}
+                    onChange={(e) => {
+                      const value = e.target.value
+                      setValue('image_url', value)
+                      if (value && value.trim()) {
+                        setImagePreview(value)
+                        setImageFile(null)
+                      } else if (!value.trim() && !imageFile) {
+                        setImagePreview('')
+                      }
+                    }}
+                  />
                 </div>
-                
+              </div>
+              
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
                     Description
                   </label>
                   <textarea
-                    className="w-full h-20 p-3 border border-gray-300 rounded-lg focus:ring-orange-500 focus:border-orange-500"
+                    className="w-full h-24 p-3 border border-gray-300 rounded-lg focus:ring-orange-500 focus:border-orange-500"
                     {...register('description')}
                     placeholder="Brief description of the recipe..."
                   />
                 </div>
                 
-                <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-                  <Input
-                    label="Prep Time (min)"
-                    type="number"
-                    {...register('prep_time', { valueAsNumber: true })}
-                  />
-                  <Input
-                    label="Cook Time (min)"
-                    type="number"
-                    {...register('cook_time', { valueAsNumber: true })}
-                  />
-                  <Input
-                    label="Servings"
-                    type="number"
-                    {...register('servings', { 
-                      required: 'Servings is required',
-                      valueAsNumber: true,
-                      min: 1
-                    })}
-                    error={errors.servings?.message}
-                  />
-                  <Input
-                    label="Source URL"
-                    {...register('source_url')}
-                    placeholder="https://example.com"
-                  />
-                </div>
-                
-                {/* Tags Section */}
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Tags
+                    Personal Notes
                   </label>
-                  
-                  {/* Current Tags */}
-                  {tags.length > 0 && (
-                    <div className="flex flex-wrap gap-2 mb-3">
-                      {tags.map((tag, index) => (
-                        <span
-                          key={index}
-                          className="inline-flex items-center px-3 py-1 rounded-full text-sm bg-orange-100 text-orange-800"
-                        >
-                          {tag}
-                          <button
-                            type="button"
-                            onClick={() => handleRemoveTag(tag)}
-                            className="ml-2 text-orange-600 hover:text-orange-800"
-                          >
-                            <X className="w-3 h-3" />
-                          </button>
-                        </span>
-                      ))}
-                    </div>
-                  )}
-                  
-                  {/* Add Tag Input */}
-                  <div className="flex space-x-2">
-                    <input
-                      type="text"
-                      value={tagInput}
-                      onChange={(e) => setTagInput(e.target.value)}
-                      onKeyPress={handleTagInputKeyPress}
-                      placeholder="Add a tag (e.g., dinner, pasta, italian)"
-                      className="flex-1 rounded-lg border-gray-300 shadow-sm focus:border-orange-500 focus:ring-orange-500"
-                    />
-                    <Button
-                      type="button"
-                      size="sm"
-                      onClick={handleAddTag}
-                      disabled={!tagInput.trim()}
-                    >
-                      <Plus className="w-4 h-4 mr-1" />
-                      Add
-                    </Button>
-                  </div>
-                  
+                  <textarea
+                    className="w-full h-24 p-3 border border-gray-300 rounded-lg focus:ring-orange-500 focus:border-orange-500"
+                    {...register('notes')}
+                    placeholder="Personal cooking notes, modifications, tips, or family preferences..."
+                  />
                   <p className="text-xs text-gray-500 mt-1">
-                    Press Enter or click Add to add tags
+                    Add your own cooking tips, modifications, or notes about this recipe
                   </p>
                 </div>
+              </div>
+              
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                <Input
+                  label="Prep Time (min)"
+                  type="number"
+                  {...register('prep_time', { valueAsNumber: true })}
+                />
+                <Input
+                  label="Cook Time (min)"
+                  type="number"
+                  {...register('cook_time', { valueAsNumber: true })}
+                />
+                <Input
+                  label="Servings"
+                  type="number"
+                  {...register('servings', { 
+                    required: 'Servings is required',
+                    valueAsNumber: true,
+                    min: 1
+                  })}
+                  error={errors.servings?.message}
+                />
+                <Input
+                  label="Source URL"
+                  {...register('source_url')}
+                  placeholder="https://example.com"
+                />
+              </div>
+              
+              {/* Tags Section */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Tags
+                </label>
                 
-                {/* Ingredients */}
-                <div>
-                  <div className="flex items-center justify-between mb-3">
-                    <h3 className="text-lg font-medium text-gray-900">Ingredients</h3>
-                    <Button
-                      type="button"
-                      size="sm"
-                      onClick={() => appendIngredient({ name: '', amount: '', unit: '' })}
-                    >
-                      <Plus className="w-4 h-4 mr-1" />
-                      Add Ingredient
-                    </Button>
-                  </div>
-                  <div className="space-y-2">
-                    {ingredientFields.map((field, index) => (
-                      <div key={field.id} className="flex items-center space-x-2">
-                        <Input
-                          placeholder="Amount"
-                          className="w-20"
-                          type="number"
-                          step="any"
-                          {...register(`ingredients.${index}.amount`)}
-                        />
-                        <Input
-                          placeholder="Unit"
-                          className="w-24"
-                          {...register(`ingredients.${index}.unit`)}
-                        />
-                        <Input
-                          placeholder="Ingredient name"
-                          className="flex-1"
-                          {...register(`ingredients.${index}.name`)}
-                        />
-                        {ingredientFields.length > 1 && (
-                          <Button
-                            type="button"
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => removeIngredient(index)}
-                          >
-                            <X className="w-4 h-4" />
-                          </Button>
-                        )}
-                      </div>
+                {/* Current Tags */}
+                {tags.length > 0 && (
+                  <div className="flex flex-wrap gap-2 mb-3">
+                    {tags.map((tag, index) => (
+                      <span
+                        key={index}
+                        className="inline-flex items-center px-3 py-1 rounded-full text-sm bg-orange-100 text-orange-800"
+                      >
+                        {tag}
+                        <button
+                          type="button"
+                          onClick={() => handleRemoveTag(tag)}
+                          className="ml-2 text-orange-600 hover:text-orange-800"
+                        >
+                          <X className="w-3 h-3" />
+                        </button>
+                      </span>
                     ))}
                   </div>
-                </div>
+                )}
                 
-                {/* Instructions */}
-                <div>
-                  <div className="flex items-center justify-between mb-3">
-                    <h3 className="text-lg font-medium text-gray-900">Instructions</h3>
-                    <Button
-                      type="button"
-                      size="sm"
-                      onClick={() => appendInstruction({ instruction: '' })}
-                    >
-                      <Plus className="w-4 h-4 mr-1" />
-                      Add Step
-                    </Button>
-                  </div>
-                  <div className="space-y-2">
-                    {instructionFields.map((field, index) => (
-                      <div key={field.id} className="flex items-start space-x-2">
-                        <span className="inline-flex items-center justify-center w-6 h-6 bg-orange-100 text-orange-800 text-sm font-medium rounded-full mt-2">
-                          {index + 1}
-                        </span>
-                        <textarea
-                          className="flex-1 p-3 border border-gray-300 rounded-lg focus:ring-orange-500 focus:border-orange-500"
-                          rows={2}
-                          placeholder="Describe this step..."
-                          {...register(`instructions.${index}.instruction`)}
-                        />
-                        {instructionFields.length > 1 && (
-                          <Button
-                            type="button"
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => removeInstruction(index)}
-                            className="mt-2"
-                          >
-                            <X className="w-4 h-4" />
-                          </Button>
-                        )}
-                      </div>
-                    ))}
-                  </div>
-                </div>
-                
-                <div className="flex justify-end space-x-3 pt-4 border-t border-gray-200">
-                  {canGoBack() && (
-                    <Button 
-                      type="button" 
-                      variant="outline" 
-                      onClick={goBack}
-                      disabled={wizardState.isProcessing}
-                    >
-                      Back
-                    </Button>
-                  )}
-                  <Button 
-                    type="button" 
-                    variant="outline" 
-                    onClick={handleCloseAttempt}
-                    disabled={wizardState.isProcessing}
-                  >
-                    Cancel
-                  </Button>
+                {/* Add Tag Input */}
+                <div className="flex space-x-2">
+                  <input
+                    type="text"
+                    value={tagInput}
+                    onChange={(e) => setTagInput(e.target.value)}
+                    onKeyPress={handleTagInputKeyPress}
+                    placeholder="Add a tag (e.g., dinner, pasta, italian)"
+                    className="flex-1 rounded-lg border-gray-300 shadow-sm focus:border-orange-500 focus:ring-orange-500"
+                  />
                   <Button
-                    type="submit" 
-                    loading={wizardState.isProcessing} 
-                    disabled={wizardState.isProcessing}
-                    className={wizardState.method === 'ai' ? 'bg-gradient-to-r from-purple-500 to-orange-500 hover:from-purple-600 hover:to-orange-600' : ''}
+                    type="button"
+                    size="sm"
+                    onClick={handleAddTag}
+                    disabled={!tagInput.trim()}
                   >
-                    {wizardState.method === 'ai' && <Sparkles className="w-4 h-4 mr-2" />}
-                    {isEditing ? 'Update Recipe' : 'Add Recipe'}
+                    <Plus className="w-4 h-4 mr-1" />
+                    Add
                   </Button>
                 </div>
-              </form>
-            )}
-          </div>
-        </div>
-      </div>
+                
+                <p className="text-xs text-gray-500 mt-1">
+                  Press Enter or click Add to add tags
+                </p>
+              </div>
+              
+              {/* Ingredients */}
+              <div>
+                <div className="flex items-center justify-between mb-3">
+                  <h3 className="text-lg font-medium text-gray-900">Ingredients</h3>
+                  <Button
+                    type="button"
+                    size="sm"
+                    onClick={() => appendIngredient({ name: '', amount: '', unit: '' })}
+                  >
+                    <Plus className="w-4 h-4 mr-1" />
+                    Add Ingredient
+                  </Button>
+                </div>
+                <div className="space-y-2">
+                  {ingredientFields.map((field, index) => (
+                    <div key={field.id} className="flex items-center space-x-2">
+                      <Input
+                        placeholder="Amount"
+                        className="w-20"
+                        type="number"
+                        step="any"
+                        {...register(`ingredients.${index}.amount`)}
+                      />
+                      <Input
+                        placeholder="Unit"
+                        className="w-24"
+                        {...register(`ingredients.${index}.unit`)}
+                      />
+                      <Input
+                        placeholder="Ingredient name"
+                        className="flex-1"
+                        {...register(`ingredients.${index}.name`)}
+                      />
+                      {ingredientFields.length > 1 && (
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => removeIngredient(index)}
+                        >
+                          <X className="w-4 h-4" />
+                        </Button>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              </div>
+              
+              {/* Instructions */}
+              <div>
+                <div className="flex items-center justify-between mb-3">
+                  <h3 className="text-lg font-medium text-gray-900">Instructions</h3>
+                  <Button
+                    type="button"
+                    size="sm"
+                    onClick={() => appendInstruction({ instruction: '' })}
+                  >
+                    <Plus className="w-4 h-4 mr-1" />
+                    Add Step
+                  </Button>
+                </div>
+                <div className="space-y-2">
+                  {instructionFields.map((field, index) => (
+                    <div key={field.id} className="flex items-start space-x-2">
+                      <span className="inline-flex items-center justify-center w-6 h-6 bg-orange-100 text-orange-800 text-sm font-medium rounded-full mt-2">
+                        {index + 1}
+                      </span>
+                      <textarea
+                        className="flex-1 p-3 border border-gray-300 rounded-lg focus:ring-orange-500 focus:border-orange-500"
+                        rows={2}
+                        placeholder="Describe this step..."
+                        {...register(`instructions.${index}.instruction`)}
+                      />
+                      {instructionFields.length > 1 && (
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => removeInstruction(index)}
+                          className="mt-2"
+                        >
+                          <X className="w-4 h-4" />
+                        </Button>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </form>
+          )}
 
-      {/* Confirmation Dialog */}
-      {showConfirmClose && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-[9998]">
-          <div className="bg-white rounded-lg max-w-md w-full p-6">
-            <h3 className="text-lg font-semibold text-gray-900 mb-4">
-              Unsaved Changes
-            </h3>
-            <p className="text-gray-600 mb-6">
-              You have unsaved changes to this recipe. Are you sure you want to close without saving?
-            </p>
+          {!isEditing && mode !== 'manual' && (
+            <div className="space-y-6">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <button
+                  onClick={() => setMode('url')}
+                  className={`p-6 border-2 rounded-xl transition-all ${
+                    mode === 'url' 
+                      ? 'border-orange-500 bg-orange-50' 
+                      : 'border-gray-200 hover:border-orange-300'
+                  }`}
+                >
+                  <Link className="w-12 h-12 text-gray-400 mx-auto mb-3" />
+                  <h3 className="font-medium text-gray-900">Import from URL</h3>
+                  <p className="text-sm text-gray-600 mt-1">
+                    Paste a recipe link
+                  </p>
+                </button>
+                
+                <button
+                  onClick={() => setMode('text')}
+                  className={`p-6 border-2 rounded-xl transition-all ${
+                    mode === 'text' 
+                      ? 'border-orange-500 bg-orange-50' 
+                      : 'border-gray-200 hover:border-orange-300'
+                  }`}
+                >
+                  <Type className="w-12 h-12 text-gray-400 mx-auto mb-3" />
+                  <h3 className="font-medium text-gray-900">Parse from Text</h3>
+                  <p className="text-sm text-gray-600 mt-1">
+                    Paste recipe text
+                  </p>
+                </button>
+                
+                <button
+                  onClick={() => setMode('manual')}
+                  className={`p-6 border-2 rounded-xl transition-all ${
+                    mode === 'manual' 
+                      ? 'border-orange-500 bg-orange-50' 
+                      : 'border-gray-200 hover:border-orange-300'
+                  }`}
+                >
+                  <Type className="w-12 h-12 text-gray-400 mx-auto mb-3" />
+                  <h3 className="font-medium text-gray-900">Manual Entry</h3>
+                  <p className="text-sm text-gray-600 mt-1">
+                    Type recipe details
+                  </p>
+                </button>
+              </div>
+            </div>
+          )}
+        </div>
+        
+        {(mode === 'manual' || isEditing) && (
+          <div className="border-t border-gray-200 p-6">
             <div className="flex justify-end space-x-3">
-              <Button
-                variant="outline"
-                onClick={handleCancelClose}
-              >
-                Keep Editing
+              <Button type="button" variant="outline" onClick={onClose}>
+                Cancel
               </Button>
               <Button
-                variant="outline"
-                onClick={handleConfirmClose}
-                className="text-red-600 border-red-300 hover:bg-red-50"
+                type="submit" 
+                onClick={handleSubmit(onSubmit)}
+                loading={loading} 
+                disabled={loading}
               >
-                Discard Changes
+                {isEditing ? 'Update Recipe' : 'Add Recipe'}
               </Button>
             </div>
           </div>
-        </div>
-      )}
+        )}
+      </div>
     </div>
   )
 

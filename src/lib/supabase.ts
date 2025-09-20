@@ -136,6 +136,7 @@ export type Database = {
           servings: number
           difficulty: string | null
           tags: string[]
+          notes: string | null
           created_at: string
           updated_at: string
           ai_collection_id: string | null
@@ -155,6 +156,7 @@ export type Database = {
           servings?: number
           difficulty?: string | null
           tags?: string[]
+          notes?: string | null
           created_at?: string
           updated_at?: string
           ai_collection_id?: string | null
@@ -174,6 +176,7 @@ export type Database = {
           servings?: number
           difficulty?: string | null
           tags?: string[]
+          notes?: string | null
           created_at?: string
           updated_at?: string
           ai_collection_id?: string | null

@@ -249,6 +249,16 @@ ${recipe.instructions.map((inst, index) => `${index + 1}. ${inst.instruction}`).
               <p className="text-gray-600 mb-6">{recipe.description}</p>
             )}
             
+            {recipe.notes && (
+              <div className="mb-6 p-4 bg-blue-50 border border-blue-200 rounded-lg">
+                <h4 className="font-semibold text-blue-900 mb-2 flex items-center">
+                  <span className="w-4 h-4 inline-block bg-blue-500 rounded-full mr-2"></span>
+                  Personal Notes
+                </h4>
+                <p className="text-blue-800 whitespace-pre-wrap leading-relaxed">{recipe.notes}</p>
+              </div>
+            )}
+            
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
               {/* Recipe Info */}
               <Card className="md:col-span-1">
