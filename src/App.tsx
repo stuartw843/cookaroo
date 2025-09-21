@@ -459,10 +459,13 @@ const Dashboard: React.FC = () => {
     
     // If we were editing a recipe, reopen it in detail view with updated data
     if (editingRecipeId) {
-      const updatedRecipe = recipes.find(r => r.id === editingRecipeId)
-      if (updatedRecipe) {
-        setSelectedRecipe(updatedRecipe)
-      }
+     // Wait a moment for the recipes to be refreshed, then find the updated recipe
+     setTimeout(() => {
+       const updatedRecipe = recipes.find(r => r.id === editingRecipeId)
+       if (updatedRecipe) {
+         setSelectedRecipe(updatedRecipe)
+       }
+     }, 100)
     }
     
     setEditingRecipe(null)
