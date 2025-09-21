@@ -10,7 +10,6 @@ import toast from 'react-hot-toast'
 interface RecipeFormData {
   title: string
   description: string
-  notes: string
   image_url: string
   source_url: string
   prep_time: number
@@ -72,7 +71,6 @@ export const AddRecipeModal: React.FC<AddRecipeModalProps> = ({
         // Populate form with existing recipe data
         setValue('title', recipe.title)
         setValue('description', recipe.description || '')
-        setValue('notes', recipe.notes || '')
         setValue('image_url', recipe.image_url || '')
         setValue('source_url', recipe.source_url || '')
         setValue('prep_time', recipe.prep_time || 0)
@@ -151,7 +149,6 @@ export const AddRecipeModal: React.FC<AddRecipeModalProps> = ({
   const populateFormWithRecipe = (recipeData: any) => {
     setValue('title', recipeData.title || '')
     setValue('description', recipeData.description || '')
-    setValue('notes', recipeData.notes || '')
     setValue('image_url', recipeData.image_url || '')
     setValue('source_url', recipeData.source_url || '')
     setValue('prep_time', recipeData.prep_time || 0)
@@ -290,7 +287,6 @@ export const AddRecipeModal: React.FC<AddRecipeModalProps> = ({
       const recipeData = {
         title: data.title,
         description: data.description || undefined,
-        notes: data.notes || undefined,
         image_url: finalImageUrl || undefined,
         source_url: data.source_url || undefined,
         prep_time: data.prep_time || undefined,
@@ -505,33 +501,17 @@ export const AddRecipeModal: React.FC<AddRecipeModalProps> = ({
                 </div>
               </div>
               
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Description
-                  </label>
-                  <textarea
-                    className="w-full h-24 p-3 border border-gray-300 rounded-lg focus:ring-orange-500 focus:border-orange-500"
-                    {...register('description')}
-                    placeholder="Brief description of the recipe..."
-                  />
-                </div>
-                
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Personal Notes
-                  </label>
-                  <textarea
-                    className="w-full h-24 p-3 border border-gray-300 rounded-lg focus:ring-orange-500 focus:border-orange-500"
-                    {...register('notes')}
-                    placeholder="Personal cooking notes, modifications, tips, or family preferences..."
-                  />
-                  <p className="text-xs text-gray-500 mt-1">
-                    Add your own cooking tips, modifications, or notes about this recipe
-                  </p>
-                </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Description
+                </label>
+                <textarea
+                  className="w-full h-24 p-3 border border-gray-300 rounded-lg focus:ring-orange-500 focus:border-orange-500"
+                  {...register('description')}
+                  placeholder="Brief description of the recipe..."
+                />
               </div>
-              
+                
               <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                 <Input
                   label="Prep Time (min)"
