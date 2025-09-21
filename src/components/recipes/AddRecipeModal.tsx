@@ -288,6 +288,7 @@ export const AddRecipeModal: React.FC<AddRecipeModalProps> = ({
       const recipeData = {
         title: data.title,
         description: data.description || undefined,
+        notes: data.notes || undefined,
         image_url: finalImageUrl || undefined,
         source_url: data.source_url || undefined,
         prep_time: data.prep_time || undefined,
