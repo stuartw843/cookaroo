@@ -44,6 +44,7 @@ const Dashboard: React.FC = () => {
   const [showAddModal, setShowAddModal] = useState(false)
   const [selectedRecipe, setSelectedRecipe] = useState<any>(null)
   const [editingRecipe, setEditingRecipe] = useState<any>(null)
+  const [editingRecipeId, setEditingRecipeId] = useState<string | null>(null)
   const [searchQuery, setSearchQuery] = useState('')
   const [selectedTags, setSelectedTags] = useState<string[]>([])
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid')
@@ -448,13 +449,24 @@ const Dashboard: React.FC = () => {
   
   const handleEditRecipe = (recipe: any) => {
     setEditingRecipe(recipe)
+    setEditingRecipeId(recipe.id)
     setSelectedRecipe(null) // Close detail modal
     setShowAddModal(true) // Open edit modal
   }
   
   const handleCloseAddModal = () => {
     setShowAddModal(false)
+    
+    // If we were editing a recipe, reopen it in detail view with updated data
+    if (editingRecipeId) {
+      const updatedRecipe = recipes.find(r => r.id === editingRecipeId)
+      if (updatedRecipe) {
+        setSelectedRecipe(updatedRecipe)
+      }
+    }
+    
     setEditingRecipe(null)
+    setEditingRecipeId(null)
   }
   
   return (
