@@ -72,6 +72,7 @@ export const AddRecipeModal: React.FC<AddRecipeModalProps> = ({
         // Populate form with existing recipe data
         setValue('title', recipe.title)
         setValue('description', recipe.description || '')
+       setValue('notes', recipe.notes || '')
         setValue('image_url', recipe.image_url || '')
         setValue('source_url', recipe.source_url || '')
         setValue('prep_time', recipe.prep_time || 0)
