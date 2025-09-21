@@ -229,6 +229,35 @@ export const useRecipes = () => {
       }
 
       await fetchRecipes()
+      
+      // Fetch and return the updated recipe with all details
+      const { data: updatedRecipe, error: fetchError } = await supabase
+        .from('recipes')
+        .select('*')
+        .eq('id', recipeId)
+        .single()
+
+      if (fetchError) throw fetchError
+
+      // Fetch ingredients and instructions for the updated recipe
+      const [ingredientsResult, instructionsResult] = await Promise.all([
+        supabase
+          .from('ingredients')
+          .select('*')
+          .eq('recipe_id', recipeId)
+          .order('order_index'),
+        supabase
+          .from('instructions')
+          .select('*')
+          .eq('recipe_id', recipeId)
+          .order('step_number')
+      ])
+
+      return {
+        ...updatedRecipe,
+        ingredients: ingredientsResult.data || [],
+        instructions: instructionsResult.data || []
+      }
     } catch (err) {
       console.error('Update recipe error:', err)
       throw err

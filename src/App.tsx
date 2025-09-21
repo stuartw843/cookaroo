@@ -454,18 +454,12 @@ const Dashboard: React.FC = () => {
     setShowAddModal(true) // Open edit modal
   }
   
-  const handleCloseAddModal = () => {
+  const handleCloseAddModal = (updatedRecipe?: any) => {
     setShowAddModal(false)
     
-    // If we were editing a recipe, reopen it in detail view with updated data
-    if (editingRecipeId) {
-     // Wait a moment for the recipes to be refreshed, then find the updated recipe
-     setTimeout(() => {
-       const updatedRecipe = recipes.find(r => r.id === editingRecipeId)
-       if (updatedRecipe) {
-         setSelectedRecipe(updatedRecipe)
-       }
-     }, 100)
+    // If we were editing a recipe and have updated data, show it immediately
+    if (editingRecipeId && updatedRecipe) {
+      setSelectedRecipe(updatedRecipe)
     }
     
     setEditingRecipe(null)

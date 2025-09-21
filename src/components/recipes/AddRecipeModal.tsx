@@ -23,7 +23,7 @@ interface RecipeFormData {
 
 interface AddRecipeModalProps {
   isOpen: boolean
-  onClose: () => void
+  onClose: (updatedRecipe?: any) => void
   onAdd: (recipe: any) => Promise<any>
   recipe?: any // For editing
   onUpdate?: (recipeId: string, recipe: any) => Promise<void>
@@ -309,14 +309,14 @@ export const AddRecipeModal: React.FC<AddRecipeModalProps> = ({
       }
       
       if (isEditing && onUpdate) {
-        await onUpdate(recipe.id, recipeData)
+        const updatedRecipe = await onUpdate(recipe.id, recipeData)
         toast.success('Recipe updated successfully!')
+        onClose(updatedRecipe)
       } else {
         await onAdd(recipeData)
         toast.success('Recipe added successfully!')
+        onClose()
       }
-      
-      onClose()
     } catch (error) {
       toast.error(isEditing ? 'Failed to update recipe' : 'Failed to save recipe')
     } finally {
