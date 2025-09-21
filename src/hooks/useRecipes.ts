@@ -79,6 +79,7 @@ export const useRecipes = () => {
   const addRecipe = async (recipeData: {
     title: string
     description?: string
+    notes?: string
     image_url?: string
     source_url?: string
     prep_time?: number
@@ -154,6 +155,7 @@ export const useRecipes = () => {
   const updateRecipe = async (recipeId: string, recipeData: {
     title: string
     description?: string
+    notes?: string
     image_url?: string
     source_url?: string
     prep_time?: number
@@ -173,6 +175,7 @@ export const useRecipes = () => {
         .update({
           title: recipeData.title,
           description: recipeData.description || null,
+          notes: recipeData.notes || null,
           image_url: recipeData.image_url || null,
           source_url: recipeData.source_url || null,
           prep_time: recipeData.prep_time || null,

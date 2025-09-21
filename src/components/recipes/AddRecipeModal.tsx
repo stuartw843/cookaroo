@@ -10,6 +10,7 @@ import toast from 'react-hot-toast'
 interface RecipeFormData {
   title: string
   description: string
+  notes: string
   image_url: string
   source_url: string
   prep_time: number
@@ -510,6 +511,20 @@ export const AddRecipeModal: React.FC<AddRecipeModalProps> = ({
                   {...register('description')}
                   placeholder="Brief description of the recipe..."
                 />
+              </div>
+              
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Personal Notes
+                </label>
+                <textarea
+                  className="w-full h-24 p-3 border border-gray-300 rounded-lg focus:ring-orange-500 focus:border-orange-500"
+                  {...register('notes')}
+                  placeholder="Personal cooking notes, modifications, tips, or family preferences..."
+                />
+                <p className="text-xs text-gray-500 mt-1">
+                  Add your own cooking tips, modifications, or notes about this recipe
+                </p>
               </div>
                 
               <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
